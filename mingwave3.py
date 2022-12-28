@@ -296,7 +296,7 @@ mc = mpf.make_marketcolors(
                            )
 
                           
-s  = mpf.make_mpf_style(marketcolors=mc)
+s  = mpf.make_mpf_style(marketcolors=mc, gridaxis='both')
 apdict = [mpf.make_addplot(df['coeff_close']),
         mpf.make_addplot(df['coeff_close_lt'], width=3, color='b'),
         mpf.make_addplot(df['coeff_high']),
