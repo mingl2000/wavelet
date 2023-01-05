@@ -11,19 +11,33 @@ import sys
 style.use('ggplot')
 
 def get1mYahooData(ticker):
-    end=datetime.date.today()
-    start = datetime.date.today()-datetime.timedelta(29)
-    end=start+datetime.timedelta(7)
-    tick = yf.Ticker(ticker)
     data=[]
-    while end<datetime.date.today():
-        df = tick.history(start=start, end=end,interval='1m')
-        data.append(df)
-        start=start+ datetime.timedelta(7)
-        end=end+ datetime.timedelta(7)
+    
 
-    data=pd.concat(data)
-    return data
+    tick = yf.Ticker(ticker)
+    df = tick.history(period='7d', interval='1m')
+    
+    data.append(df)
+
+
+    #minstart = datetime.date.today()-datetime.timedelta(29)
+    #minstart = datetime.datetime(minstart.year, minstart.month, minstart.day)
+    minstart =np.min(df.index)-datetime.timedelta(21)
+    end=np.min(df.index)
+    start=end-datetime.timedelta(7)
+    
+    while start>minstart:
+        df = tick.history(start=start, end=end,interval='1m')
+        data.insert(0, df)
+        start=start- datetime.timedelta(7)
+        end=end- datetime.timedelta(7)
+
+    start=minstart
+    df = tick.history(start=start, end=end,interval='1m')
+    data.insert(0, df)    
+    df=pd.concat(data)
+    df.to_csv((ticker +'_1m.csv'), index=True)
+    return df
 
 def getYahooData(ticker, interval='1m'):
     if ticker.lower()=='spx':
@@ -42,6 +56,25 @@ def getYahooData(ticker, interval='1m'):
     df = yf.download(tickers=ticker, period=period, interval=interval)
     return df
 
+def get_upper_lower(cluster_centers, price):
+    upper=-1
+    lower=-1
+
+    for i in range(len(cluster_centers)):
+        if cluster_centers[i][0]>=price:
+            if upper==-1:            
+                upper=i
+            else: 
+                if abs(cluster_centers[i][0]-price)< abs(cluster_centers[i][0]-cluster_centers[upper][0]):
+                    upper=i
+
+        if cluster_centers[i][0]<=price:
+            if lower==-1:            
+                lower=i
+            else: 
+                if abs(cluster_centers[i][0]-price)< abs(cluster_centers[i][0]-cluster_centers[lower][0]):
+                    lower=i
+    return (upper, lower)
 figsize=(20,15)
 saturation_point=0.05
 clustersize=11
@@ -66,6 +99,10 @@ if len(sys.argv) >=6:
 
 
 data=getYahooData(ticker, interval)
+data.tail()
+lastTS=np.max(data.index)
+lastPrice=data.iloc[len(data)-1]["Close"]
+
 low = pd.DataFrame(data=data['Low'], index=data.index)
 high = pd.DataFrame(data=data['High'], index=data.index)
 
@@ -110,20 +147,35 @@ for i in low_centers:
     hlines.append(i[0])
     colors.append('g')
     #plt.axhline(i, c='g', ls='--')
-fmt="top custers: i={0}     low={1:8.2f}    wcss={2:8.2f}"
+
+(upper,lower)=get_upper_lower(low_centers, lastPrice)    
+fmt="top custers: i={0}     low={1:8.2f} {3:1}   wcss={2:8.2f}"
 for i in range(len(low_centers)):
-    print(fmt.format(i, low_centers[i][0],wcss_low[i] ))
+    if i==upper or i==lower:
+        mark='*'
+    else:
+        mark=' '
+    print(fmt.format(i, low_centers[i][0],wcss_low[i], mark ))
 print('')
 for i in high_centers:
     hlines.append(i[0])
     colors.append('r')
     #plt.axhline(i, c='r', ls='--')
-fmt="top custers: i={0}     high={1:8.2f}    wcss={2:8.2f}"
-for i in range(len(high_centers)):
-    print(fmt.format(i, high_centers[i][0],wcss_low[i] ))
-print('')
 
-mpf.plot(data,type='candle', hlines=dict(hlines=hlines,colors=colors),figsize=figsize, block=False,title=(ticker+' top ' + str(noclusters) +'clusters'))
+(upper,lower)=get_upper_lower(high_centers, lastPrice)
+fmt="top custers: i={0}     high={1:8.2f} {3:1}    wcss={2:8.2f}"
+for i in range(len(high_centers)):
+    if i==upper or i==lower:
+        mark='*'
+    else:
+        mark=' '
+    print(fmt.format(i, high_centers[i][0],wcss_low[i], mark ))
+print('')
+fmt="{0:10} top {1:2} clusters {2:18}     {3:8.2f}"
+title=fmt.format(ticker, noclusters, lastTS.strftime("%m/%d/%Y %H:%M"), lastPrice)
+#title=ticker+' top ' + str(noclusters) +'clusters ' + str(lastTS) +' ' + str(lastPrice) 
+
+mpf.plot(data,type='candle', hlines=dict(hlines=hlines,colors=colors),figsize=figsize, block=False,title=title)
 
 #finding the optimum k using the silhouette method
 def optimum_Kvalue(data):
@@ -162,8 +214,11 @@ for i in high_ce:
     hlines.append(i[0])
     colors.append('r')
     #plt.axhline(i, c='r', ls='--')
-for i in range(len(low_ce)):
+for i in range(len(high_ce)):
     print('optimum_Kvalue custers: i=', i,  ' high=', high_ce[i])
 print('')
-mpf.plot(data,type='candle', hlines=dict(hlines=hlines,colors=colors),figsize=figsize, title=(ticker+' optimum_Kvalue'))
+fmt="{0:10} optimum_Kvalue  {1:18}     {2:8.2f}"
+title=fmt.format(ticker, lastTS.strftime("%m/%d/%Y %H:%M"), lastPrice)
+#title=ticker+' optimum_Kvalue ' + str(lastTS) +' ' + str(lastPrice) 
+mpf.plot(data,type='candle', hlines=dict(hlines=hlines,colors=colors),figsize=figsize, title=title)
 plt.show()
