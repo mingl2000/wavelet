@@ -8,7 +8,11 @@ from matplotlib import style
 import mplfinance as mpf
 import datetime 
 import sys
+from talib import ATR
+
 style.use('ggplot')
+def getATR(df, ATR_period):
+  return ATR(df["High"], df["Low"], df["Close"], ATR_period)[-1]
 
 def get1mYahooData(ticker):
     data=[]
@@ -80,6 +84,7 @@ saturation_point=0.05
 clustersize=11
 noclusters=3
 interval='1m'
+brick_size=0.5
 if len(sys.argv) <2:
   ticker='QQQ'
 if len(sys.argv) >=2:
@@ -95,11 +100,15 @@ if len(sys.argv) >=5:
 
 if len(sys.argv) >=6:
   noclusters=int(sys.argv[5])
+if len(sys.argv) >=7:
+  brick_size=float(sys.argv[6])
 
 
 
 data=getYahooData(ticker, interval)
 data.tail()
+brick_size=brick_size*getATR(data, 14)
+
 lastTS=np.max(data.index)
 lastPrice=data.iloc[len(data)-1]["Close"]
 
@@ -176,7 +185,7 @@ title=fmt.format(ticker, noclusters, lastTS.strftime("%m/%d/%Y %H:%M"), lastPric
 #title=ticker+' top ' + str(noclusters) +'clusters ' + str(lastTS) +' ' + str(lastPrice) 
 
 mpf.plot(data,type='candle', hlines=dict(hlines=hlines,colors=colors),figsize=figsize, block=False,title=title)
-
+mpf.plot(data,type='renko',volume=False,hlines=dict(hlines=hlines,colors=colors), figsize=figsize,tight_layout=True,returnfig=True,block=False, renko_params=dict(brick_size=brick_size))
 #finding the optimum k using the silhouette method
 def optimum_Kvalue(data):
     kmax = 11
@@ -220,5 +229,6 @@ print('')
 fmt="{0:10} optimum_Kvalue  {1:18}     {2:8.2f}"
 title=fmt.format(ticker, lastTS.strftime("%m/%d/%Y %H:%M"), lastPrice)
 #title=ticker+' optimum_Kvalue ' + str(lastTS) +' ' + str(lastPrice) 
-mpf.plot(data,type='candle', hlines=dict(hlines=hlines,colors=colors),figsize=figsize, title=title)
+mpf.plot(data,type='candle', hlines=dict(hlines=hlines,colors=colors),figsize=figsize, block=False,title=title)
+mpf.plot(data,type='renko',volume=False,hlines=dict(hlines=hlines,colors=colors), figsize=figsize,tight_layout=True,returnfig=True,block=False, renko_params=dict(brick_size=brick_size))
 plt.show()
