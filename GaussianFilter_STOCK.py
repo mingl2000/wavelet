@@ -6,6 +6,36 @@ from os.path import exists
 import numpy as np
 import pandas as pd
 from talib import ATR
+import datetime
+def get1mYahooData(ticker):
+    data=[]
+    
+
+    tick = yf.Ticker(ticker)
+    df = tick.history(period='7d', interval='1m')
+    
+    data.append(df)
+
+
+    #minstart = datetime.date.today()-datetime.timedelta(29)
+    #minstart = datetime.datetime(minstart.year, minstart.month, minstart.day)
+    minstart =np.min(df.index)-datetime.timedelta(21)
+    end=np.min(df.index)
+    start=end-datetime.timedelta(7)
+    
+    while start>minstart:
+        df = tick.history(start=start, end=end,interval='1m')
+        data.insert(0, df)
+        start=start- datetime.timedelta(7)
+        end=end- datetime.timedelta(7)
+
+    start=minstart
+    df = tick.history(start=start, end=end,interval='1m')
+    data.insert(0, df)    
+    df=pd.concat(data)
+    df.to_csv((ticker +'_1m.csv'), index=True)
+    return df
+
 def GetYahooData(symbol, bars=500, interval='1d'):
   #start=datetime.date.today()-datetime.timedelta(days=days)
   #end=datetime.date.today()
@@ -15,9 +45,8 @@ def GetYahooData(symbol, bars=500, interval='1d'):
   
   #if interval.endswith('m') or interval.endswith('h'):
   #  period='max'
-  
-  if interval.endswith('1m'):
-    period='7d'
+  if interval=='1m':
+    return get1mYahooData(symbol)
   elif  interval.endswith('m'):
     period='60d'
   elif  interval.endswith('h') or interval.endswith('d'):
@@ -60,11 +89,16 @@ def GetYahooData(symbol, bars=500, interval='1d'):
 #gaussian_filter1d([1.0, 2.0, 3.0, 4.0, 5.0], 4)
 #array([ 2.91948343,  2.95023502,  3.        ,  3.04976498,  3.08051657])
 import matplotlib.pyplot as plt
-#rng = np.random.default_rng()
-#x = rng.standard_normal(101).cumsum()
-#print(x)
+import sys
 
-df=GetYahooData('QQQ', bars=720, interval='1d')
+if len(sys.argv) <2:
+  ticker='QQQ'
+if len(sys.argv) >=2:
+  ticker=sys.argv[1]
+if len(sys.argv) >=3:
+  interval=sys.argv[2]
+
+df=GetYahooData(ticker, bars=720, interval=interval)
 x= df["Close"].to_numpy() 
 y2 = gaussian_filter1d(x, 2)
 y5 = gaussian_filter1d(x, 5)
@@ -73,36 +107,22 @@ y13 = gaussian_filter1d(x, 13)
 y21 = gaussian_filter1d(x, 21)
 figsize=(26,13)
 
-apdict = [
-        mpf.make_addplot(y2,color='b', width=3),
+apdict = {
+        "gaussian_filter1d-3":mpf.make_addplot(y2,color='b', width=3),
         #mpf.make_addplot(y5,color='g'),
-        mpf.make_addplot(y8,color='y', width=3),
-        mpf.make_addplot(y21,color='r', width=3)
+        "gaussian_filter1d-8":mpf.make_addplot(y8,color='y', width=3),
+        "gaussian_filter1d-21":mpf.make_addplot(y21,color='r', width=3)
         #mpf.make_addplot(wf_vol[1],panel=2,ylabel='wf_vol[1]',y_on_right=False),
         #mpf.make_addplot((df['coeff_vol']),panel=1,color='g'),
         #mpf.make_addplot((df['coeff_vol_01']),panel=1,color='g')
-        ]
-#mpf.plot(df,type='candle',volume=False,addplot=apdict, figsize=figsize,tight_layout=True,returnfig=True,block=False, mav=(65))
-fig,ax=mpf.plot(df,type='candle',title="gaussian_filter1d", volume=False,addplot=apdict, figsize=figsize,tight_layout=True,returnfig=True,block=False,mav=())
-legend=["gaussian_filter1d-3", "gaussian_filter1d-8", "gaussian_filter1d-21"]
-ax[0].legend(legend, fontsize = 'x-large')
-'''
-leg = ax[0].legend()
+}
+fig,ax=mpf.plot(df,type='candle',title="gaussian_filter1d", volume=False,addplot=list(apdict.values()), figsize=figsize,tight_layout=True,returnfig=True,block=False,mav=())
 
-# change the line width for the legend
-for line in leg.get_lines():
-    line.set_linewidth(4.0)
-'''
-plt.grid()
-'''
-plt.plot(x, 'k', label='original data', color='black')
-plt.plot(y2, '--', label='filtered, sigma=2', color='r', linewidth=2)
-plt.plot(y5, ':', label='filtered, sigma=5', color='b', linewidth=3)
-#plt.plot(y8, '--', label='filtered, sigma=8', color='g')
-#plt.plot(y13, ':', label='filtered, sigma=13', color='g')
-#plt.plot(y21, ':', label='filtered, sigma=21', color='purple')
+ax[0].legend([None]*(len(apdict)+2))
+handles = ax[0].get_legend().legendHandles
+ax[0].legend(handles=handles[2:],labels=list(apdict.keys()))
 
-plt.legend()
+
 plt.grid()
-'''
+
 plt.show()
