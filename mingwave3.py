@@ -75,7 +75,7 @@ def GetYahooData(symbol, bars=500, interval='1d'):
   #  period=str(days)+'wk'
   
   dataFileName="data/"+symbol+'_' +period+'_'+ interval +".csv"
-  if exists(dataFileName):
+  if interval.endswith(('d','D')) and datetime.datetime.now().hour>=13 and exists(dataFileName):
     print('read yahoo data from cache')
     df=pd.read_csv(dataFileName, header=0, index_col=0, encoding='utf-8', parse_dates=True)
     #df.index=df["Date"]
