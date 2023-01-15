@@ -154,7 +154,7 @@ linewidths=[]
 #data['Close'].plot(figsize=(16,8), c='b')
 for i in low_centers:
     hlines.append(i[0])
-    colors.append('g')
+    
     #plt.axhline(i, c='g', ls='--')
 
 (upper,lower)=get_upper_lower(low_centers, lastPrice)    
@@ -164,12 +164,18 @@ for i in range(len(low_centers)):
         mark='*'
     else:
         mark=' '
-    linewidths.append(len(low_centers)+2-i)
+    if i<3:
+        colors.append('b')
+        linewidths.append(len(low_centers)+2-i)
+    else:
+        colors.append('g')
+        linewidths.append(len(low_centers)+2-i)
+    
     print(fmt.format(i, low_centers[i][0],wcss_low[i], mark ))
 print('')
 for i in high_centers:
     hlines.append(i[0])
-    colors.append('r')
+    
     #plt.axhline(i, c='r', ls='--')
 
 (upper,lower)=get_upper_lower(high_centers, lastPrice)
@@ -179,6 +185,13 @@ for i in range(len(high_centers)):
         mark='*'
     else:
         mark=' '
+    if i<3:
+        colors.append('violet')
+        linewidths.append(len(low_centers)+2-i)
+    else:
+        colors.append('r')
+        linewidths.append(len(low_centers)+2-i)
+
     linewidths.append(len(high_centers)+2-i)
     print(fmt.format(i, high_centers[i][0],wcss_low[i], mark ))
 print('')
@@ -186,7 +199,7 @@ fmt="{0:10} top {1:2} clusters {2:18}     {3:8.2f}"
 title=fmt.format(ticker, noclusters, lastTS.strftime("%m/%d/%Y %H:%M"), lastPrice)
 #title=ticker+' top ' + str(noclusters) +'clusters ' + str(lastTS) +' ' + str(lastPrice) 
 
-mpf.plot(data,type='candle', hlines=dict(hlines=hlines,colors=colors),figsize=figsize, block=False,title=title)
+mpf.plot(data,type='candle', hlines=dict(hlines=hlines,colors=colors, linewidths=linewidths),figsize=figsize, block=False,title=title)
 mpf.plot(data,type='renko',volume=False,hlines=dict(hlines=hlines,colors=colors, linewidths=linewidths), figsize=figsize,tight_layout=True,returnfig=True,block=False, renko_params=dict(brick_size=brick_size))
 #finding the optimum k using the silhouette method
 def optimum_Kvalue(data):
