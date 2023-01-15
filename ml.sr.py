@@ -150,7 +150,7 @@ high_centers = high_clusters.cluster_centers_
 
 hlines=[]
 colors=[]
-
+linewidths=[]
 #data['Close'].plot(figsize=(16,8), c='b')
 for i in low_centers:
     hlines.append(i[0])
@@ -164,6 +164,7 @@ for i in range(len(low_centers)):
         mark='*'
     else:
         mark=' '
+    linewidths.append(len(low_centers)+2-i)
     print(fmt.format(i, low_centers[i][0],wcss_low[i], mark ))
 print('')
 for i in high_centers:
@@ -178,6 +179,7 @@ for i in range(len(high_centers)):
         mark='*'
     else:
         mark=' '
+    linewidths.append(len(high_centers)+2-i)
     print(fmt.format(i, high_centers[i][0],wcss_low[i], mark ))
 print('')
 fmt="{0:10} top {1:2} clusters {2:18}     {3:8.2f}"
@@ -185,7 +187,7 @@ title=fmt.format(ticker, noclusters, lastTS.strftime("%m/%d/%Y %H:%M"), lastPric
 #title=ticker+' top ' + str(noclusters) +'clusters ' + str(lastTS) +' ' + str(lastPrice) 
 
 mpf.plot(data,type='candle', hlines=dict(hlines=hlines,colors=colors),figsize=figsize, block=False,title=title)
-mpf.plot(data,type='renko',volume=False,hlines=dict(hlines=hlines,colors=colors), figsize=figsize,tight_layout=True,returnfig=True,block=False, renko_params=dict(brick_size=brick_size))
+mpf.plot(data,type='renko',volume=False,hlines=dict(hlines=hlines,colors=colors, linewidths=linewidths), figsize=figsize,tight_layout=True,returnfig=True,block=False, renko_params=dict(brick_size=brick_size))
 #finding the optimum k using the silhouette method
 def optimum_Kvalue(data):
     kmax = 11
@@ -230,5 +232,8 @@ fmt="{0:10} optimum_Kvalue  {1:18}     {2:8.2f}"
 title=fmt.format(ticker, lastTS.strftime("%m/%d/%Y %H:%M"), lastPrice)
 #title=ticker+' optimum_Kvalue ' + str(lastTS) +' ' + str(lastPrice) 
 mpf.plot(data,type='candle', hlines=dict(hlines=hlines,colors=colors),figsize=figsize, block=False,title=title)
-mpf.plot(data,type='renko',volume=False,hlines=dict(hlines=hlines,colors=colors), figsize=figsize,tight_layout=True,returnfig=True,block=False, renko_params=dict(brick_size=brick_size))
+fig, ax = mpf.plot(data,type='renko',volume=False,hlines=dict(hlines=hlines,colors=colors), figsize=figsize,tight_layout=True,returnfig=True,block=False, renko_params=dict(brick_size=brick_size))
+
+
+
 plt.show()
