@@ -76,7 +76,7 @@ def GetYahooData(symbol, bars=500, interval='1d'):
   #  period=str(days)+'wk'
   
   dataFileName="data/"+symbol+'_' +period+'_'+ interval +".csv"
-  if exists(dataFileName):
+  if interval.endswith(('d','D')) and datetime.datetime.now().hour>=13 and exists(dataFileName):
     print('read yahoo data from cache')
     df=pd.read_csv(dataFileName, header=0, index_col=0, encoding='utf-8', parse_dates=True)
     #df.index=df["Date"]
@@ -140,8 +140,8 @@ def plot_wt(df, colname, wavelet):
 
 
 def printwavelet(daysprint, df, wf_close, wf_high, wf_low, wf_vol):
-  print('day                  close         close1       high             high1         low               low1              volume                  volume1')
-  fmt="{0:18}{1:8.2f} * {2:8.2f} {3:4} {4:8.2f} {5:4} * {6:8.2f} {7:4} {8:8.2f} {9:4} * {10:8.2f} {11:4} {12:8.2f} {13:4} * {14:18,.0f} {15:4} {16:18,.0f} {17:4}"
+  print('day                  close         close1       high             high1         low               low1              volume                  volume1                   Gaussian Filter3                   Gaussian Filter5')
+  fmt="{0:18}{1:8.2f} * {2:8.2f} {3:4} {4:8.2f} {5:4} * {6:8.2f} {7:4} {8:8.2f} {9:4} * {10:8.2f} {11:4} {12:8.2f} {13:4} * {14:18,.0f} {15:4} {16:18,.0f} {17:4} {18:18,.2f} {19:18,.2f}"
   for i in range(daysprint,-1,-1):  
     if wf_close[0][-i-1]>wf_close[0][-i-2]:
       closedir='UP'
@@ -179,7 +179,7 @@ def printwavelet(daysprint, df, wf_close, wf_high, wf_low, wf_vol):
     else:
       vol1dir='DOWN'
     
-    print(fmt.format(df.index[-i-1].strftime("%m/%d/%Y %H:%M"), df['Close'][-i-1], wf_close[0][-i-1],closedir,wf_close[1][-i-1],close1dir,wf_high[0][-i-1],highdir,wf_high[1][-i-1],high1dir,wf_low[0][-i-1],lowdir,wf_low[1][-i-1],low1dir,wf_vol[0][-i-1],voldir,wf_vol[1][-i-1],vol1dir))
+    print(fmt.format(df.index[-i-1].strftime("%m/%d/%Y %H:%M"), df['Close'][-i-1], wf_close[0][-i-1],closedir,wf_close[1][-i-1],close1dir,wf_high[0][-i-1],highdir,wf_high[1][-i-1],high1dir,wf_low[0][-i-1],lowdir,wf_low[1][-i-1],low1dir,wf_vol[0][-i-1],voldir,wf_vol[1][-i-1],vol1dir, gf3[i], gf5[i]))
 
 
 brick_size=0.1 # real brick_size will be brick_size*ATR(14)
@@ -312,8 +312,8 @@ mc = mpf.make_marketcolors(
                           
 s  = mpf.make_mpf_style(marketcolors=mc, gridaxis='both')
 apdict = [
-        mpf.make_addplot(df["gf3"], width=5, color='r'),
-        mpf.make_addplot(df["gf5"], width=5, color='r'),
+#        mpf.make_addplot(df["gf3"], width=3, color='r',linestyle='dashdot'),
+#        mpf.make_addplot(df["gf5"], width=5, color='y',linestyle='dashdot'),
         mpf.make_addplot(df['coeff_close']),
         mpf.make_addplot(df['coeff_close_lt'], width=3, color='b'),
         mpf.make_addplot(df['coeff_high']),
@@ -330,7 +330,10 @@ fig1,ax1=mpf.plot(df,type='candle',volume=True,addplot=apdict, figsize=figsize,t
 
 fig2,ax2=mpf.plot(df,type='candle',volume=True,addplot=apdict, figsize=figsize,tight_layout=True, panel_ratios=(1,1),style=s,returnfig=True,block=False)
 
-apdict = [mpf.make_addplot(df['coeff_close']),
+apdict = [
+        mpf.make_addplot(df["gf3"], width=3, color='r',linestyle='dashdot'),
+        mpf.make_addplot(df["gf5"], width=5, color='y',linestyle='dashdot'),
+        mpf.make_addplot(df['coeff_close']),
         mpf.make_addplot(df['coeff_close_lt'], width=3, color='b'),
         mpf.make_addplot(df['coeff_high']),
         mpf.make_addplot(df['coeff_low']),
