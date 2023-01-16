@@ -199,8 +199,15 @@ fmt="{0:10} top {1:2} clusters {2:18}     {3:8.2f}"
 title=fmt.format(ticker, noclusters, lastTS.strftime("%m/%d/%Y %H:%M"), lastPrice)
 #title=ticker+' top ' + str(noclusters) +'clusters ' + str(lastTS) +' ' + str(lastPrice) 
 
-mpf.plot(data,type='candle', hlines=dict(hlines=hlines,colors=colors, linewidths=linewidths),figsize=figsize, block=False,title=title)
-mpf.plot(data,type='renko',volume=False,hlines=dict(hlines=hlines,colors=colors, linewidths=linewidths), figsize=figsize,tight_layout=True,returnfig=True,block=False, renko_params=dict(brick_size=brick_size))
+fig, ax =mpf.plot(data,type='candle', hlines=dict(hlines=hlines,colors=colors, linewidths=linewidths),figsize=figsize, block=False,title=title,returnfig=True)
+for i in range(len(hlines)):
+    ax[0].text(10+40*i, hlines[i], str(round(hlines[i],2)), fontsize=15,  color='black')
+
+
+fig, ax =mpf.plot(data,type='renko',volume=False,hlines=dict(hlines=hlines,colors=colors, linewidths=linewidths), figsize=figsize,tight_layout=True,returnfig=True,block=False, renko_params=dict(brick_size=brick_size))
+for i in range(len(hlines)):
+    ax[0].text(10+40*i, hlines[i], str(round(hlines[i],2)), fontsize=15,  color='black')
+
 #finding the optimum k using the silhouette method
 def optimum_Kvalue(data):
     kmax = 11
@@ -244,8 +251,18 @@ print('')
 fmt="{0:10} optimum_Kvalue  {1:18}     {2:8.2f}"
 title=fmt.format(ticker, lastTS.strftime("%m/%d/%Y %H:%M"), lastPrice)
 #title=ticker+' optimum_Kvalue ' + str(lastTS) +' ' + str(lastPrice) 
-mpf.plot(data,type='candle', hlines=dict(hlines=hlines,colors=colors),figsize=figsize, block=False,title=title)
-fig, ax = mpf.plot(data,type='renko',volume=False,hlines=dict(hlines=hlines,colors=colors), figsize=figsize,tight_layout=True,returnfig=True,block=False, renko_params=dict(brick_size=brick_size))
+fig, ax =mpf.plot(data,type='candle', hlines=dict(hlines=hlines,colors=colors),figsize=figsize, block=False,title=title, returnfig=True)
+for i in range(len(hlines)):
+    ax[0].text(10+40*i, hlines[i], str(round(hlines[i],2)), fontsize=15,  color='black')
+
+
+
+##plt.text(5, 5, 'bbb')
+fig, ax =mpf.plot(data,type='renko',volume=False,hlines=dict(hlines=hlines,colors=colors), figsize=figsize,tight_layout=True,returnfig=True,block=False, renko_params=dict(brick_size=brick_size))
+for i in range(len(hlines)):
+    ax[0].text(10+40*i, hlines[i], str(round(hlines[i],2)), fontsize=15,  color='black')
+
+
 
 
 
