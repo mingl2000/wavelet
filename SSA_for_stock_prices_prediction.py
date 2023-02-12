@@ -114,7 +114,7 @@ test_d = closes[test_date:]
 fig(16, 3); plt.plot(train_d, label='Train'); plt.plot(test_d, 'r', label='Test')
 plt.title('%s adjusted daily close prices' % symbol)
 plt.legend()
-
+plt.show()
 
 # We can see how SSA decomposes original series into trend components and noise. There is chart of original series, reconstructed from first 4 components and residuals.
 
@@ -124,8 +124,8 @@ MAX_LAG_NUMBER = 120 # 4*30 = 1 quarter max
 MAX_LAG_NUMBER = 200 # 1 year?
 
 fig()
-ssaview(train_d.values, MAX_LAG_NUMBER, [0,1,2,3])
-
+ssaview(df,train_d.values, MAX_LAG_NUMBER, [0,1,2,3])
+plt.show()
 
 # We can plot residuals plot using following code
 

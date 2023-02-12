@@ -7,7 +7,7 @@
 import scipy.linalg as linalg
 import scipy.stats as stats
 import numpy as np
-
+import mplfinance as mpf
 try:
     from matplotlib import pyplot as plt
     import pylab
@@ -201,7 +201,7 @@ def ssa_cutoff_order(x: np.ndarray, dim=200, cutoff_pctl=75, show_plot=False):
     return n_cutoff
 
 
-def ssaview(y, dim, k):
+def ssaview(df,y, dim, k):
     """
     Visualising tools for singular spectrum analysis
 
@@ -219,6 +219,18 @@ def ssaview(y, dim, k):
     """
     pc, s, v = ssa(y, dim)
     yr = inv_ssa(pc, v, k)
+
+    mc = mpf.make_marketcolors(
+                           volume='lightgray'
+                           )
+
+    s  = mpf.make_mpf_style(marketcolors=mc, gridaxis='both')
+    apdict = [
+#        mpf.make_addplot(df["gf5"], width=5, color='y',linestyle='dashdot'),
+        mpf.make_addplot(yr, width=5, color='r')
+    ]
+    fig1,ax1=mpf.plot(df[-len(yr)-1:-1],type='candle',volume=True,addplot=apdict, tight_layout=True,style=s,returnfig=True,block=False)
+    plt.show()
 
     plt.subplot2grid((3, 3), (0, 0), rowspan=2, colspan=2)
     plt.title('Singular Spectrum View for %d window length' % dim)
