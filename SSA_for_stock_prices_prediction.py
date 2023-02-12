@@ -158,7 +158,7 @@ forecast = ssa_predict(train_d.values, n_co, list(range(8)), days_to_predict, 1e
 
 fig(16, 5)
 
-prev_ser = closes[datetime.date.isoformat(parser.parse(test_date) - timedelta(120)):test_date]
+prev_ser = closes[datetime.date.isoformat(parser.parse(test_date) - timedelta(MAX_LAG_NUMBER)):test_date]
 plt.plot(prev_ser, label='Train Data')
 
 test_d = closes[test_date:]
