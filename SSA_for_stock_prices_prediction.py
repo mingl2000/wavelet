@@ -7,7 +7,7 @@
 
 
 from ssa_core import ssa, ssa_predict, ssaview, inv_ssa, ssa_cutoff_order
-from mpl_utils import set_mpl_theme
+#from mpl_utils import set_mpl_theme
 
 import matplotlib.pylab as plt
 import quandl
