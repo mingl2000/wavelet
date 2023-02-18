@@ -4,6 +4,18 @@ import numpy as np
 from numpy import pi
 import matplotlib.pyplot as plt
 import pandas as pd
+#import matplotlib.pylab as plt
+import quandl
+import sys
+import numpy as np
+
+import datetime
+from datetime import timedelta
+from dateutil import parser
+import pandas_datareader as pdr
+import mplfinance as mpf
+import yfinance as yf
+from os.path import exists
 
 # Fiddle with figure settings here:
 plt.rcParams['figure.figsize'] = (10,8)
@@ -14,6 +26,53 @@ plt.rcParams['axes.linewidth'] = 2
 from cycler import cycler
 cols = plt.get_cmap('tab10').colors
 plt.rcParams['axes.prop_cycle'] = cycler(color=cols)
+def GetYahooData(symbol, bars=500, interval='1d'):
+  #start=datetime.date.today()-datetime.timedelta(days=days)
+  #end=datetime.date.today()
+  if symbol=='SPX':
+    symbol='^GSPC'
+  #df=.gepdrt_data_yahoo(symbols=symbol,  start=start, end=end,interval=interval)
+  
+  #if interval.endswith('m') or interval.endswith('h'):
+  #  period='max'
+  
+  if interval.endswith('1m'):
+    period='7d'
+  elif  interval.endswith('m'):
+    period='60d'
+  elif  interval.endswith('h'):
+    period='730d'
+  else:
+    period='max'
+  
+  #elif interval.endswith('d'):
+    #period=str(days)+'d'
+  #  period='max'
+  #elif  interval.endswith('w'):
+  #  period=str(days)+'wk'
+  
+  dataFileName="data/"+symbol+'_' +period+'_'+ interval +".csv"
+  if interval.endswith(('d','D')) and datetime.datetime.now().hour>=13 and exists(dataFileName):
+    print('read yahoo data from cache')
+    df=pd.read_csv(dataFileName, header=0, index_col=0, encoding='utf-8', parse_dates=True)
+    #df.index=df["Date"]
+  else:
+    print('read yahoo data from web')
+    df = yf.download(tickers=symbol, period=period, interval=interval)
+    df.to_csv(dataFileName, index=True, date_format='%Y-%m-%d %H:%M:%S')
+  #dataFileName="data/"+symbol+".csv"
+  
+  #df = pd.read_csv(dataFileName,index_col=0,parse_dates=True)
+  #df.shape
+  df.dropna(inplace = True)
+  df =df [-bars:]
+  df.head(3)
+  df.tail(3)
+  df["id"]=np.arange(len(df))
+  #df["date1"]=df.index.astype(str)
+  #df["datefmt"]=df.index.strftime('%m/%d/%Y')
+  
+  return df
 
 # A simple little 2D matrix plotter, excluding x and y labels.
 def plot_2d(m, title=""):
@@ -22,17 +81,27 @@ def plot_2d(m, title=""):
     plt.yticks([])
     plt.title(title)
 
+
 N = 200 # The number of time 'moments' in our toy series
+'''
 t = np.arange(0,N)
+
 trend = 0.001 * (t - 100)**2
+
 p1, p2 = 20, 30
+
 periodic1 = 2 * np.sin(2*pi*t/p1)
 periodic2 = 0.75 * np.sin(2*pi*t/p2)
 
 np.random.seed(123) # So we generate the same noisy time series every time.
 noise = 2 * (np.random.rand(N) - 0.5)
 F = trend + periodic1 + periodic2 + noise
-
+'''
+df=GetYahooData('QQQ', 500, '1d')
+N = len(df) # The number of time 'moments' in our toy series
+F=df['Close']
+t=df.index
+'''
 # Plot everything
 plt.plot(t, F, lw=2.5)
 plt.plot(t, trend, alpha=0.75)
@@ -43,7 +112,21 @@ plt.legend(["Toy Series ($F$)", "Trend", "Periodic #1", "Periodic #2", "Noise"])
 plt.xlabel("$t$")
 plt.ylabel("$F(t)$")
 plt.title("The Toy Time Series and its Components");
+plt.show()
 
+figsize=(26,13)
+mc = mpf.make_marketcolors(
+                           volume='lightgray'
+                           )
+s  = mpf.make_mpf_style(marketcolors=mc)
+apdict = [
+        mpf.make_addplot(trend,panel=2,ylabel='trend'),
+        mpf.make_addplot(periodic1,panel=2,ylabel='periodic1'),
+        mpf.make_addplot(periodic2,panel=2,ylabel='periodic2',y_on_right=True),
+]
+fig1,ax1=mpf.plot(df[-len(trend):],type='candle',volume=True,addplot=apdict, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False)
+plt.show()
+'''
 
 L = 70 # The window length.
 K = N - L + 1 # The number of columns in the trajectory matrix.
@@ -172,12 +255,19 @@ fig.set_ylabel(r"$\tilde{F}_i(t)$")
 legend = [r"$\tilde{F}_{%s}$" %i for i in range(n)] + ["$F$"]
 fig.set_title("The First 12 Components of the Toy Time Series")
 fig.legend(legend, loc=(1.05,0.1));
-
+'''
 # Assemble the grouped components of the time series.
 F_trend = X_to_TS(X_elem[[0,1,6]].sum(axis=0))
 F_periodic1 = X_to_TS(X_elem[[2,3]].sum(axis=0))
 F_periodic2 = X_to_TS(X_elem[[4,5]].sum(axis=0))
 F_noise = X_to_TS(X_elem[7:].sum(axis=0))
+'''
+# Assemble the grouped components of the time series.
+F_trend = X_to_TS(X_elem[[0,1,2]].sum(axis=0))
+F_periodic1 = X_to_TS(X_elem[[3,4]].sum(axis=0))
+F_periodic2 = X_to_TS(X_elem[[5,6]].sum(axis=0))
+F_noise = X_to_TS(X_elem[7:].sum(axis=0))
+
 
 # Plot the toy time series and its separated components on a single plot.
 plt.plot(t,F, lw=1)
@@ -193,7 +283,34 @@ plt.legend(legend)
 plt.title("Grouped Time Series Components")
 plt.show()
 
+figsize=(26,13)
+mc = mpf.make_marketcolors(
+                           volume='lightgray'
+                           )
+s  = mpf.make_mpf_style(marketcolors=mc)
+F_total=F_trend+F_periodic1+F_periodic2
+apdict = [
+        mpf.make_addplot(F_trend,panel=0,ylabel='trend'),
+        mpf.make_addplot(F_total,panel=0,ylabel='total', width=3, color='m'),
+        mpf.make_addplot(F_periodic1,panel=2,ylabel='periodic1',y_on_right=True, width=2, color='r'),
+        mpf.make_addplot(F_periodic2,panel=2,ylabel='periodic2', color='b'),
+]
+fig1,ax1=mpf.plot(df[-len(F_trend):],type='candle',volume=True,addplot=apdict, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False)
+plt.show()
+
 # A list of tuples so we can create the next plot with a loop.
+t = np.arange(0,N)
+
+trend = 0.001 * (t - 100)**2
+
+p1, p2 = 20, 30
+
+periodic1 = 2 * np.sin(2*pi*t/p1)
+periodic2 = 0.75 * np.sin(2*pi*t/p2)
+
+np.random.seed(123) # So we generate the same noisy time series every time.
+noise = 2 * (np.random.rand(N) - 0.5)
+
 components = [("Trend", trend, F_trend), 
               ("Periodic 1", periodic1, F_periodic1),
               ("Periodic 2", periodic2, F_periodic2),
@@ -411,14 +528,69 @@ F_ssa_L2.orig_TS.plot(alpha=0.4)
 plt.xlabel("$t$")
 plt.ylabel(r"$\tilde{F}_i(t)$")
 plt.title(r"$L=2$ for the Toy Time Series");
-
-F_ssa_L5 = SSA(F, 5)
-F_ssa_L5.components_to_df().plot()
-F_ssa_L5.orig_TS.plot(alpha=0.4)
+plt.show()
+F_ssa_L8 = SSA(F, 8)
+F_ssa_L8.components_to_df().plot()
+F_ssa_L8.orig_TS.plot(alpha=0.4)
 plt.xlabel("$t$")
 plt.ylabel(r"$\tilde{F}_i(t)$")
 plt.title(r"$L=5$ for the Toy Time Series");
 plt.show()
+
+
+#for j in range[8]:
+
+ssa_comps=[]
+for j in range(8):
+    ssa_comp=[]
+    for i in range(N):
+        ssa_comp.append(F_ssa_L8.TS_comps[i][j])
+    ssa_comps.append(ssa_comp)
+
+df['trend']=ssa_comps[0]
+df['periodic1']=ssa_comps[1]
+df['periodic2']=ssa_comps[2]
+df['periodic3']=ssa_comps[3]
+df['periodic4']=ssa_comps[4]
+df['periodic5']=ssa_comps[5]
+df['periodic6']=ssa_comps[6]
+df['periodic7']=ssa_comps[7]
+
+df['F_total']=df['trend'] + df['periodic1'] +df['periodic2'] +df['periodic3'] +df['periodic4'] +df['periodic5'] +df['periodic6'] +df['periodic7']
+'''
+F_total=
+for j in range(8):
+    ssa_comp=[]
+    for i in range(N):
+        ssa_comp.append(F_ssa_L8.TS_comps[i][j])
+    ssa_comps.append(ssa_comp)
+F_total=[]
+for i in range(N):
+    a=0
+    for j in range(8):
+        a=a+F_ssa_L8.TS_comps[i][j]
+    F_total.append(a)
+
+#F_total=ssa_comps[0]+ssa_comps[1]+ssa_comps[2]+ssa_comps[3]+ssa_comps[4]+ssa_comps[5] +ssa_comps[6] +ssa_comps[7]
+'''
+apdict = [
+        mpf.make_addplot(df['trend'],panel=0,ylabel='trend'),
+        mpf.make_addplot(F_total,panel=0,ylabel='total', width=3, color='m'),
+        
+        mpf.make_addplot(df['periodic1'],panel=2,ylabel='periodic1',y_on_right=True, width=2, color='r'),
+        
+        mpf.make_addplot(df['periodic2'],panel=2,ylabel='periodic2', color='r'),
+        mpf.make_addplot(df['periodic3'],panel=2,ylabel='periodic3', color='b'),
+        mpf.make_addplot(df['periodic4'],panel=2,ylabel='periodic4', color='y'),
+        mpf.make_addplot(df['periodic5'],panel=3,ylabel='periodic5', color='r'),
+        mpf.make_addplot(df['periodic6'],panel=3,ylabel='periodic6', color='b'),
+        mpf.make_addplot(df['periodic7'],panel=3,ylabel='periodic7', color='y'),
+        
+]
+fig1,ax1=mpf.plot(df,type='candle',volume=True,addplot=apdict, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False)
+plt.show()
+
+
 
 F_ssa_L20 = SSA(F, 20)
 F_ssa_L20.plot_wcorr()
@@ -436,6 +608,7 @@ plt.legend([r"$\tilde{F}_0$",
             r"$\tilde{F}_4+ \ldots + \tilde{F}_{19}$",
             r"$\tilde{F}_3$"]);
 
+plt.show()
 F_ssa_L40 = SSA(F, 40)
 F_ssa_L40.plot_wcorr()
 plt.title("W-Correlation for Toy Time Series, $L=40$");
@@ -448,7 +621,7 @@ plt.title("Component Groupings for Toy Time Series, $L=40$")
 plt.xlabel("$t$")
 plt.ylabel(r"$\tilde{F}_i(t)$")
 plt.legend([r"$\tilde{{F}}^{{({0})}}$".format(i) for i in range(4)]);
-
+plt.show()
 
 F_ssa_L60 = SSA(F, 60)
 F_ssa_L60.plot_wcorr()
