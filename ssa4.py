@@ -97,7 +97,9 @@ np.random.seed(123) # So we generate the same noisy time series every time.
 noise = 2 * (np.random.rand(N) - 0.5)
 F = trend + periodic1 + periodic2 + noise
 '''
-df=GetYahooData('QQQ', 500, '1d')
+ticker='QQQ'
+ticker='002230.sz'
+df=GetYahooData(ticker, 500, '1d')
 N = len(df) # The number of time 'moments' in our toy series
 F=df['Close']
 t=df.index
@@ -114,7 +116,7 @@ plt.ylabel("$F(t)$")
 plt.title("The Toy Time Series and its Components");
 plt.show()
 
-figsize=(26,13)
+
 mc = mpf.make_marketcolors(
                            volume='lightgray'
                            )
@@ -128,6 +130,9 @@ fig1,ax1=mpf.plot(df[-len(trend):],type='candle',volume=True,addplot=apdict, fig
 plt.show()
 '''
 
+
+
+'''
 L = 70 # The window length.
 K = N - L + 1 # The number of columns in the trajectory matrix.
 # Create the trajectory matrix by pulling the relevant subseries of F, and stacking them as columns.
@@ -227,16 +232,18 @@ for j in range(0,n):
     title = r"$\tilde{\mathbf{X}}_{" + str(j) + "}$"
     plot_2d(Hankelise(X_elem[j]), title)
 plt.tight_layout() 
+'''
 
 
-
+'''
 def X_to_TS(X_i):
     """Averages the anti-diagonals of the given elementary matrix, X_i, and returns a time series."""
     # Reverse the column ordering of X_i
     X_rev = X_i[::-1]
     # Full credit to Mark Tolonen at https://stackoverflow.com/a/6313414 for this one:
     return np.array([X_rev.diagonal(i).mean() for i in range(-X_i.shape[0]+1, X_i.shape[1])])
-
+'''
+'''
 n = min(12,d) # In case of noiseless time series with d < 12.
 
 # Fiddle with colour cycle - need more colours!
@@ -257,10 +264,12 @@ fig.set_title("The First 12 Components of the Toy Time Series")
 fig.legend(legend, loc=(1.05,0.1));
 '''
 # Assemble the grouped components of the time series.
+'''
 F_trend = X_to_TS(X_elem[[0,1,6]].sum(axis=0))
 F_periodic1 = X_to_TS(X_elem[[2,3]].sum(axis=0))
 F_periodic2 = X_to_TS(X_elem[[4,5]].sum(axis=0))
 F_noise = X_to_TS(X_elem[7:].sum(axis=0))
+'''
 '''
 # Assemble the grouped components of the time series.
 F_trend = X_to_TS(X_elem[[0,1,2]].sum(axis=0))
@@ -368,6 +377,8 @@ plt.xlim(-0.5,6.5)
 plt.ylim(6.5,-0.5)
 plt.clim(0,1)
 plt.title(r"W-Correlation for Components 0–6");
+'''
+
 
 class SSA(object):
     
@@ -522,6 +533,7 @@ We have now established the machinery to easily investigate the effect of the wi
  
 A window length of 2 may seem like a useless choice, but it's a good place to start and watch the time series get decomposed into more and more components. We'll use the handy SSA.components_to_df() method to return a Pandas DataFrame and plot all elementary components at once.
 '''
+'''
 F_ssa_L2 = SSA(F, 2)
 F_ssa_L2.components_to_df().plot()
 F_ssa_L2.orig_TS.plot(alpha=0.4)
@@ -529,54 +541,64 @@ plt.xlabel("$t$")
 plt.ylabel(r"$\tilde{F}_i(t)$")
 plt.title(r"$L=2$ for the Toy Time Series");
 plt.show()
-F_ssa_L8 = SSA(F, 8)
-F_ssa_L8.components_to_df().plot()
+'''
+window_size=5
+
+F_ssa_L8 = SSA(F, window_size)
+#F_ssa_L8.components_to_df().plot()
+'''
 F_ssa_L8.orig_TS.plot(alpha=0.4)
 plt.xlabel("$t$")
 plt.ylabel(r"$\tilde{F}_i(t)$")
 plt.title(r"$L=5$ for the Toy Time Series");
 plt.show()
-
+'''
 
 #for j in range[8]:
-
 ssa_comps=[]
-for j in range(8):
+for j in range(window_size):
     ssa_comp=[]
     for i in range(N):
         ssa_comp.append(F_ssa_L8.TS_comps[i][j])
     ssa_comps.append(ssa_comp)
 
 df['trend']=ssa_comps[0]
-df['periodic1']=ssa_comps[1]
-df['periodic2']=ssa_comps[2]
-df['periodic3']=ssa_comps[3]
-df['periodic4']=ssa_comps[4]
-df['periodic5']=ssa_comps[5]
-df['periodic6']=ssa_comps[6]
-df['periodic7']=ssa_comps[7]
+df['F_total']=df['trend'] 
+F_total=[]
+for i in range(N):
+    a=0
+    for j in range(window_size):
+        a=a+F_ssa_L8.TS_comps[i][j]
+    F_total.append(a)
 
-df['F_total']=df['trend'] + df['periodic1'] +df['periodic2'] +df['periodic3'] +df['periodic4'] +df['periodic5'] +df['periodic6'] +df['periodic7']
-'''
-F_total=
-for j in range(8):
+
+apdict = [
+        mpf.make_addplot(df['trend'],panel=0,ylabel='trend'),
+        mpf.make_addplot(F_total,panel=0,ylabel='total', width=3, color='m')
+        
+        
+]
+
+for i in range(window_size):
+    key='periodic'+str(i)
+    df[key]=ssa_comps[1]
+    df['F_total']=df['F_total']+df[key]
+    apdict.append(
+        mpf.make_addplot(df[key],panel=2,ylabel=key, color='y')
+    )
+
+
+#df['F_total']=df['trend'] + df['periodic1'] +df['periodic2'] +df['periodic3'] +df['periodic4'] +df['periodic5'] +df['periodic6'] +df['periodic7']
+#df['F_total']=df['F_total']+df['periodic8'] +df['periodic9'] +df['periodic10'] +df['periodic11'] +df['periodic12'] 
+
+#F_total=
+for j in range(window_size):
     ssa_comp=[]
     for i in range(N):
         ssa_comp.append(F_ssa_L8.TS_comps[i][j])
     ssa_comps.append(ssa_comp)
-F_total=[]
-for i in range(N):
-    a=0
-    for j in range(8):
-        a=a+F_ssa_L8.TS_comps[i][j]
-    F_total.append(a)
 
-#F_total=ssa_comps[0]+ssa_comps[1]+ssa_comps[2]+ssa_comps[3]+ssa_comps[4]+ssa_comps[5] +ssa_comps[6] +ssa_comps[7]
 '''
-apdict = [
-        mpf.make_addplot(df['trend'],panel=0,ylabel='trend'),
-        mpf.make_addplot(F_total,panel=0,ylabel='total', width=3, color='m'),
-        
         mpf.make_addplot(df['periodic1'],panel=2,ylabel='periodic1',y_on_right=True, width=2, color='r'),
         
         mpf.make_addplot(df['periodic2'],panel=2,ylabel='periodic2', color='r'),
@@ -585,11 +607,32 @@ apdict = [
         mpf.make_addplot(df['periodic5'],panel=3,ylabel='periodic5', color='r'),
         mpf.make_addplot(df['periodic6'],panel=3,ylabel='periodic6', color='b'),
         mpf.make_addplot(df['periodic7'],panel=3,ylabel='periodic7', color='y'),
+'''        
+'''
+apdict = [
+        mpf.make_addplot(df['trend'],panel=0,ylabel='trend'),
+        mpf.make_addplot(F_total,panel=0,ylabel='total', width=3, color='m'),
+        mpf.make_addplot(df['periodic1'],panel=2,ylabel='periodic1',y_on_right=True, width=2, color='r'),        
+        mpf.make_addplot(df['periodic2'],panel=3,ylabel='periodic2', color='r'),
+        mpf.make_addplot(df['periodic3'],panel=3,ylabel='periodic3', color='b'),
+        mpf.make_addplot(df['periodic4'],panel=3,ylabel='periodic4', color='y')
+        
         
 ]
+'''
+
+#F_total=ssa_comps[0]+ssa_comps[1]+ssa_comps[2]+ssa_comps[3]+ssa_comps[4]+ssa_comps[5] +ssa_comps[6] +ssa_comps[7]
+
+''''''
+figsize=(26,13)
+mc = mpf.make_marketcolors(
+                           volume='lightgray'
+                           )
+s  = mpf.make_mpf_style(marketcolors=mc)
+
 fig1,ax1=mpf.plot(df,type='candle',volume=True,addplot=apdict, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False)
 plt.show()
-
+'''
 
 
 F_ssa_L20 = SSA(F, 20)
@@ -609,6 +652,7 @@ plt.legend([r"$\tilde{F}_0$",
             r"$\tilde{F}_3$"]);
 
 plt.show()
+
 F_ssa_L40 = SSA(F, 40)
 F_ssa_L40.plot_wcorr()
 plt.title("W-Correlation for Toy Time Series, $L=40$");
@@ -640,3 +684,4 @@ plt.title(r"The First 7 Components of the Toy Time Series, $L=60$")
 plt.xlabel(r"$t$");
 
 plt.show()
+'''
