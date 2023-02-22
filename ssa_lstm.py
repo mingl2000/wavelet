@@ -29,13 +29,72 @@ import random
 from sklearn.metrics import mean_absolute_error # 平方绝对误差
 
 
+import datetime
+from datetime import timedelta
+from dateutil import parser
+import pandas_datareader as pdr
+import mplfinance as mpf
+import yfinance as yf
+from os.path import exists
+
+def GetYahooData(symbol, bars=500, interval='1d'):
+  #start=datetime.date.today()-datetime.timedelta(days=days)
+  #end=datetime.date.today()
+  if symbol=='SPX':
+    symbol='^GSPC'
+  #df=.gepdrt_data_yahoo(symbols=symbol,  start=start, end=end,interval=interval)
+  
+  #if interval.endswith('m') or interval.endswith('h'):
+  #  period='max'
+  
+  if interval.endswith('1m'):
+    period='7d'
+  elif  interval.endswith('m'):
+    period='60d'
+  elif  interval.endswith('h'):
+    period='730d'
+  else:
+    period='max'
+  
+  #elif interval.endswith('d'):
+    #period=str(days)+'d'
+  #  period='max'
+  #elif  interval.endswith('w'):
+  #  period=str(days)+'wk'
+  
+  dataFileName="data/"+symbol+'_' +period+'_'+ interval +".csv"
+  if interval.endswith(('d','D')) and datetime.datetime.now().hour>=13 and exists(dataFileName):
+    print('read yahoo data from cache')
+    df=pd.read_csv(dataFileName, header=0, index_col=0, encoding='utf-8', parse_dates=True)
+    #df.index=df["Date"]
+  else:
+    print('read yahoo data from web')
+    df = yf.download(tickers=symbol, period=period, interval=interval)
+    df.to_csv(dataFileName, index=True, date_format='%Y-%m-%d %H:%M:%S')
+  #dataFileName="data/"+symbol+".csv"
+  
+  #df = pd.read_csv(dataFileName,index_col=0,parse_dates=True)
+  #df.shape
+  df.dropna(inplace = True)
+  df =df [-bars:]
+  df.head(3)
+  df.tail(3)
+  df["id"]=np.arange(len(df))
+  #df["date1"]=df.index.astype(str)
+  #df["datefmt"]=df.index.strftime('%m/%d/%Y')
+  
+  return df
+
+
+
 #时间
 time=[]
 #特征
 feature=[]
 #目标
 target=[]
- 
+targets=[]
+'''
 csv_file = csv.reader(open('新疆XXXX湿度.csv'))
 for content in csv_file:
     content=list(map(float,content))
@@ -55,9 +114,16 @@ for i in target:
  
 feature.reverse()
 targets.reverse()
- 
- 
- 
+'''
+
+df=GetYahooData('QQQ', 1000, '1d')
+
+for i in range(1, len(df)):
+    time.append(df.index[i-1])
+    feature.append([df['Close'][i-1]])
+    target.append(df['Close'][i])
+
+targets=target
 # 标准化转换
 scaler = StandardScaler()
 # 训练标准化对象
@@ -66,11 +132,13 @@ scaler.fit(feature)
 feature= scaler.transform(feature)
  
 #str转datetime
+'''
 time_rel=[]
 for i,j in enumerate(time):
     time_rel.append(datetime.strptime(j[0],'%Y/%m/%d %H:%M'))
 time_rel.reverse()
- 
+'''
+time_rel=time 
  
 fig = plt.gcf()
 fig.set_size_inches(18.5, 10.5)
