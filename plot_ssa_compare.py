@@ -82,16 +82,25 @@ if len(sys.argv) <2:
 if len(sys.argv) >=2:
   symbol=sys.argv[1]
 
-window_sizes=[5, 10,15,20, 25,30]
+
+bars=500
 if len(sys.argv) >=3:
+  bars=int(sys.argv[2])
+interval='1d'
+if len(sys.argv) >=4:
+  interval=sys.argv[3]
+
+
+window_sizes=[5, 10,15,20, 25,30]
+if len(sys.argv) >=5:
   window_sizes=[]
-  for s in sys.argv[2].split(','):
+  for s in sys.argv[4].split(','):
     window_sizes.append(int(s))
 
 #data = quandl.get('WIKI/%s' % instrument, start_date='2017-01-01', end_date='2012-02-10')
 
 
-df=GetYahooData(symbol, bars=500, interval='1d')
+df=GetYahooData(symbol, bars=bars, interval='1d')
 closes = df['Adj Close'].rename('close')
 '''
 N=20
@@ -123,28 +132,46 @@ window_size = 2
 #groups = [np.arange(i, i + 5) for i in range(0, 11, 5)]
 
 # Singular Spectrum Analysis
-plt.figure(figsize=(16, 6))
-plt.plot(closes.to_numpy(), 'o-', label='Original')
+#plt.figure(figsize=(16, 6))
+#plt.plot(closes.to_numpy(), 'o-', label='Original')
+
+import mplfinance as mpf
+figsize=(26,13)
+mc = mpf.make_marketcolors(
+                           volume='lightgray'
+                           )
+
+                          
+s  = mpf.make_mpf_style(marketcolors=mc, gridaxis='both')
+apdict = []
 for window_size in window_sizes:
   #window_size=i
   ssa = SingularSpectrumAnalysis(window_size=window_size, groups=None)
   X_ssa = ssa.fit_transform(X)
-  print(window_size, X_ssa[0][-1] )
+  newcol='ssa_'+str(window_size)
+  df[newcol]=X_ssa[0]
+  apdict.append(mpf.make_addplot(df[newcol]))
+  print(window_size, X_ssa[0][-1], len(X_ssa[0]) )
 
   #print(X_ssa)
   # Show the results for the first time series and its subseries
 
   #ax1 = plt.subplot(211)
-  plt.plot(X_ssa[0],  label=('X_ssa[0] window=' +str(window_size)))
+  #plt.plot(X_ssa[0],  label=('X_ssa[0] window=' +str(window_size)))
   
-  plt.legend(loc='best', fontsize=14)
+  #plt.legend(loc='best', fontsize=14)
 
-
+'''
 plt.suptitle('Singular Spectrum Analysis', fontsize=20)
 
 plt.tight_layout()
 plt.subplots_adjust(top=0.88)
 plt.show()
+'''
+
+fig1,ax1=mpf.plot(df,type='candle',volume=True,addplot=apdict, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False)
+plt.show()
+
 
 # The first subseries consists of the trend of the original time series.
 # The second and third subseries consist of noise.
