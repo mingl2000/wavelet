@@ -10,8 +10,6 @@ algorithm is Singular Spectrum Analysis. This example illustrates the
 decomposition of a time series into several subseries using this algorithm and
 visualizes the different subseries extracted.
 It is implemented as :class:`pyts.decomposition.SingularSpectrumAnalysis`.
-https://pyts.readthedocs.io/en/stable/auto_examples/decomposition/plot_ssa.html
-
 """
 
 # Author: Johann Faouzi <johann.faouzi@gmail.com>
@@ -20,32 +18,123 @@ https://pyts.readthedocs.io/en/stable/auto_examples/decomposition/plot_ssa.html
 import numpy as np
 import matplotlib.pyplot as plt
 from pyts.decomposition import SingularSpectrumAnalysis
+from numpy import pi
+import datetime
+from datetime import timedelta
+from dateutil import parser
+import pandas_datareader as pdr
+import pandas as pd
+import mplfinance as mpf
+import yfinance as yf
+
+from os.path import exists
+import yfinance as yf
+def GetYahooData(symbol, bars=500, interval='1d'):
+  #start=datetime.date.today()-datetime.timedelta(days=days)
+  #end=datetime.date.today()
+  if symbol=='SPX':
+    symbol='^GSPC'
+  #df=.gepdrt_data_yahoo(symbols=symbol,  start=start, end=end,interval=interval)
+  
+  #if interval.endswith('m') or interval.endswith('h'):
+  #  period='max'
+  
+  if interval.endswith('1m'):
+    period='7d'
+  elif  interval.endswith('m'):
+    period='60d'
+  elif  interval.endswith('h'):
+    period='730d'
+  else:
+    period='max'
+  
+  #elif interval.endswith('d'):
+    #period=str(days)+'d'
+  #  period='max'
+  #elif  interval.endswith('w'):
+  #  period=str(days)+'wk'
+  
+  dataFileName="data/"+symbol+'_' +period+'_'+ interval +".csv"
+  if interval.endswith(('d','D')) and datetime.datetime.now().hour>=13 and exists(dataFileName):
+    print('read yahoo data from cache')
+    df=pd.read_csv(dataFileName, header=0, index_col=0, encoding='utf-8', parse_dates=True)
+    #df.index=df["Date"]
+  else:
+    print('read yahoo data from web')
+    df = yf.download(tickers=symbol, period=period, interval=interval)
+    df.to_csv(dataFileName, index=True, date_format='%Y-%m-%d %H:%M:%S')
+  #dataFileName="data/"+symbol+".csv"
+  
+  #df = pd.read_csv(dataFileName,index_col=0,parse_dates=True)
+  #df.shape
+  df.dropna(inplace = True)
+  df =df [-bars:]
+  df.head(3)
+  df.tail(3)
+  df["id"]=np.arange(len(df))
+  #df["date1"]=df.index.astype(str)
+  #df["datefmt"]=df.index.strftime('%m/%d/%Y')
+  
+  return df
+
+
+import sys
+if len(sys.argv) <2:
+  symbol='QQQ'
+if len(sys.argv) >=2:
+  symbol=sys.argv[1]
+
+
+#data = quandl.get('WIKI/%s' % instrument, start_date='2017-01-01', end_date='2012-02-10')
+
+
+df=GetYahooData(symbol, bars=500, interval='1d')
+closes = df['Adj Close'].rename('close')
+'''
+N=20
+t = np.arange(0,N)
+
+trend = 0.001 * (t - 100)**2
+
+p1, p2 = 20, 30
+
+periodic1 = 2 * np.sin(2*pi*t/p1)
+periodic2 = 0.75 * np.sin(2*pi*t/p2)
+
+np.random.seed(123) # So we generate the same noisy time series every time.
+noise = 2 * (np.random.rand(N) - 0.5)
+F = trend + periodic1 + periodic2 + noise
 
 # Parameters
-n_samples, n_timestamps = 100, 48
+n_samples, n_timestamps = 1000, 10
 
 # Toy dataset
 rng = np.random.RandomState(41)
 X = rng.randn(n_samples, n_timestamps)
-
+'''
+X=[]
+X.append(closes)
 # We decompose the time series into three subseries
-window_size = 15
-groups = [np.arange(i, i + 5) for i in range(0, 11, 5)]
+window_size = 2
+
+#groups = [np.arange(i, i + 5) for i in range(0, 11, 5)]
 
 # Singular Spectrum Analysis
-ssa = SingularSpectrumAnalysis(window_size=15, groups=groups)
+ssa = SingularSpectrumAnalysis(window_size=window_size, groups=None)
 X_ssa = ssa.fit_transform(X)
 
+print(X_ssa)
 # Show the results for the first time series and its subseries
 plt.figure(figsize=(16, 6))
 
-ax1 = plt.subplot(121)
-ax1.plot(X[0], 'o-', label='Original')
+ax1 = plt.subplot(211)
+ax1.plot(X_ssa[0],  label='X_ssa[0]')
+ax1.plot(closes.to_numpy(), 'o-', label='Original')
 ax1.legend(loc='best', fontsize=14)
 
-ax2 = plt.subplot(122)
-for i in range(len(groups)):
-    ax2.plot(X_ssa[0, i], 'o--', label='SSA {0}'.format(i + 1))
+ax2 = plt.subplot(212)
+for i in range(1, window_size):
+    ax2.plot(X_ssa[i], 'o--', label='SSA {0}'.format(i + 1))
 ax2.legend(loc='best', fontsize=14)
 
 plt.suptitle('Singular Spectrum Analysis', fontsize=20)

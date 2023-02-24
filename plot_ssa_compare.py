@@ -76,10 +76,17 @@ def GetYahooData(symbol, bars=500, interval='1d'):
   
   return df
 
-symbol = 'MSFT'
-symbol = 'SPX'
-symbol='QQQ'
-symbol='002230.sz'
+import sys
+if len(sys.argv) <2:
+  symbol='QQQ'
+if len(sys.argv) >=2:
+  symbol=sys.argv[1]
+
+window_sizes=[5, 10,15,20, 25,30]
+if len(sys.argv) >=3:
+  window_sizes=[]
+  for s in sys.argv[2].split(','):
+    window_sizes.append(int(s))
 
 #data = quandl.get('WIKI/%s' % instrument, start_date='2017-01-01', end_date='2012-02-10')
 
@@ -118,7 +125,7 @@ window_size = 2
 # Singular Spectrum Analysis
 plt.figure(figsize=(16, 6))
 plt.plot(closes.to_numpy(), 'o-', label='Original')
-for window_size in [5, 10,15,20, 25,30]:
+for window_size in window_sizes:
   #window_size=i
   ssa = SingularSpectrumAnalysis(window_size=window_size, groups=None)
   X_ssa = ssa.fit_transform(X)

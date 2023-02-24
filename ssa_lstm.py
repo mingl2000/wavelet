@@ -147,6 +147,11 @@ plt.plot(time_rel, targets)
 plt.xlabel('Time')
 plt.ylabel('Value')
 
+'''
+ 3.奇异谱分析
+'''
+print('奇异谱分析')
+
 # step1 嵌入
 windowLen = 11              # 嵌入窗口长度
 seriesLen = len(feature)     # 序列长度
@@ -189,11 +194,15 @@ ax = plt.subplot(5,2,1)
 ax.plot(rec[10, :])   
 fig = plt.gcf()
 fig.set_size_inches(18.5, 10.5)
-
+'''
+4.分组
+'''
 rrr1 = rec[0,:]+rec[1,:]+rec[2,:]+rec[3,:]+rec[4,:]
 rrr2 = +rec[5,:]+rec[6,:]+rec[7,:]+rec[8,:]+rec[9,:]+rec[10,:]
 
-
+'''
+5.将两组分别LSTM
+'''
 from numpy.random import seed 
 seed(5) 
 import tensorflow
@@ -278,6 +287,7 @@ pyplot.plot(test)
 pyplot.plot(predictions1d1)
 pyplot.legend(['True','R'])
 pyplot.show()
+
 
 from numpy.random import seed 
 seed(5) 
@@ -364,6 +374,9 @@ pyplot.plot(predictions1d2)
 pyplot.legend(['True','R'])
 pyplot.show()
 
+'''
+6.预测非SSA处理的LSTM模型
+'''
 from numpy.random import seed 
 seed(5) 
 import tensorflow
@@ -449,6 +462,10 @@ pyplot.plot(predictions1d)
 pyplot.legend(['True','R'])
 pyplot.show()
 
+'''
+7.对比
+将rrr1与rrr2的预测结果累加，与非SSA的LSTM预测模型作对比
+'''
 predictions1d1=np.array(predictions1d1)
 predictions1d2=np.array(predictions1d2)
 ssalstm=predictions1d1+predictions1d2
