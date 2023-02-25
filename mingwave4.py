@@ -76,7 +76,8 @@ def GetYahooData(symbol, bars=500, interval='1d'):
   #  period=str(days)+'wk'
   
   dataFileName="data/"+symbol+'_' +period+'_'+ interval +".csv"
-  if interval.endswith(('d','D')) and datetime.datetime.now().hour>=13 and exists(dataFileName):
+  dataFileName1="data/"+symbol+'_' +'max'+'_'+ interval +".csv"
+  if interval.endswith(('d','D')) and datetime.datetime.now().hour>=13 and (exists(dataFileName) or exists(dataFileName1)):
     print('read yahoo data from cache')
     df=pd.read_csv(dataFileName, header=0, index_col=0, encoding='utf-8', parse_dates=True)
     #df.index=df["Date"]
@@ -175,26 +176,34 @@ def plot_ssa_compare(df, symbol, window_sizes):
     if window_size==window_sizes[int(len(window_sizes)/2)]:
       newcol_diff='ssa_diff_'+str(window_size)
       df[newcol_diff]=df['Close']-X_ssa[0]
-      apdict.append(mpf.make_addplot(df['Close']-X_ssa[0], panel=1,secondary_y=False,ylabel='diff'))
-      apdict.append(mpf.make_addplot(df['High']-X_ssa[0], panel=1, secondary_y=False))
-      apdict.append(mpf.make_addplot(df['Low']-X_ssa[0], panel=1, secondary_y=False))
+      #apdict.append(mpf.make_addplot(df['Close']-X_ssa[0], panel=1,secondary_y=False,ylabel='diff'))
+      #apdict.append(mpf.make_addplot(df['High']-X_ssa[0], panel=1, secondary_y=False))
+      #apdict.append(mpf.make_addplot(df['Low']-X_ssa[0], panel=1, secondary_y=False))
 
-      stderr=np.std(df[newcol_diff].to_numpy())
-      apdict.append(mpf.make_addplot(df[newcol_diff], panel=1,ylabel=newcol_diff, secondary_y=False))
+      def plot_ssa_diff_std(colname, X_ssa):
+        apdict.append(mpf.make_addplot(df[colname]-X_ssa[0], panel=1,secondary_y=False,ylabel='diff'))
+        #apdict.append(mpf.make_addplot(df[newcol_diff], panel=1,ylabel=newcol_diff, secondary_y=False))
 
-      newcol_diff_1_std_ub='ssa_diff_1std_up_'+str(window_size)
-      newcol_diff_1_std_lb='ssa_diff_1std_low_'+str(window_size)
-      df[newcol_diff_1_std_ub]=stderr
-      df[newcol_diff_1_std_lb]=-stderr
-      apdict.append(mpf.make_addplot(df[newcol_diff_1_std_ub], panel=1,width=2,color='b', secondary_y=False))
-      apdict.append(mpf.make_addplot(df[newcol_diff_1_std_lb], panel=1,width=2, color='b', secondary_y=False))
+        newcol_diff_1_std_ub='ssa_diff_1std_up_'+colname +' '+str(window_size) 
+        newcol_diff_1_std_lb='ssa_diff_1std_low_'+colname +' '+str(window_size)
+        stderr=np.std((df[colname]-X_ssa[0]).to_numpy())
+        print('stderr', stderr)
+        df[newcol_diff_1_std_ub]=stderr
+        df[newcol_diff_1_std_lb]=-stderr
+        apdict.append(mpf.make_addplot(df[newcol_diff_1_std_ub], panel=1,width=2,color='b', secondary_y=False))
+        apdict.append(mpf.make_addplot(df[newcol_diff_1_std_lb], panel=1,width=2, color='b', secondary_y=False))
 
-      newcol_diff_2_std_ub='ssa_diff_2std_up_'+str(window_size)
-      newcol_diff_2_std_lb='ssa_diff_2std_low_'+str(window_size)
-      df[newcol_diff_2_std_ub]=2*stderr
-      df[newcol_diff_2_std_lb]=-2*stderr
-      apdict.append(mpf.make_addplot(df[newcol_diff_2_std_ub], panel=1,width=4, color='r', secondary_y=False))
-      apdict.append(mpf.make_addplot(df[newcol_diff_2_std_lb], panel=1,width=4, color='r', secondary_y=False))
+        newcol_diff_2_std_ub='ssa_diff_2std_up_'+str(window_size)
+        newcol_diff_2_std_lb='ssa_diff_2std_low_'+str(window_size)
+        df[newcol_diff_2_std_ub]=2*stderr
+        df[newcol_diff_2_std_lb]=-2*stderr
+        apdict.append(mpf.make_addplot(df[newcol_diff_2_std_ub], panel=1,width=1, color='r', secondary_y=False))
+        apdict.append(mpf.make_addplot(df[newcol_diff_2_std_lb], panel=1,width=1, color='r', secondary_y=False))
+      
+      plot_ssa_diff_std('Close', X_ssa)
+      plot_ssa_diff_std('High', X_ssa)
+      plot_ssa_diff_std('Low', X_ssa)
+
       print(window_size, X_ssa[0][-1], len(X_ssa[0]) )
 
 
@@ -216,6 +225,7 @@ def plot_ssa_compare(df, symbol, window_sizes):
   '''
 
   fig1,ax1=mpf.plot(df,type='candle',volume=True,volume_panel=2,addplot=apdict, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False, title=ticker)
+  fig1,ax1=mpf.plot(df,type='candle',volume=False,volume_panel=2,addplot=apdict, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False, title=ticker,panel_ratios=(1,2))
 
 
   # The first subseries consists of the trend of the original time series.
