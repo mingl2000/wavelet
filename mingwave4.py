@@ -115,7 +115,8 @@ def plot_ssa_compare(df, symbol, window_sizes):
 
 
   #df=GetYahooData(symbol, bars=bars, interval='1d')
-  closes = df['Adj Close'].rename('close')
+  #closes = df['Adj Close'].rename('close')
+  closes = df['Close']
   '''
   N=20
   t = np.arange(0,N)
@@ -140,8 +141,12 @@ def plot_ssa_compare(df, symbol, window_sizes):
   '''
   X=[]
   X.append(closes)
+  high = df['High']
+  H=[]
+  H.append(high)
+
   # We decompose the time series into three subseries
-  window_size = 2
+  #window_size = 2
 
   #groups = [np.arange(i, i + 5) for i in range(0, 11, 5)]
 
@@ -163,30 +168,36 @@ def plot_ssa_compare(df, symbol, window_sizes):
     ssa = SingularSpectrumAnalysis(window_size=window_size, groups=None)
     X_ssa = ssa.fit_transform(X)
     newcol='ssa_'+str(window_size)
-    newcol_diff='ssa_diff_'+str(window_size)
     df[newcol]=X_ssa[0]
-    df[newcol_diff]=df['Close']-X_ssa[0]
+
     apdict.append(mpf.make_addplot(df[newcol], ylabel=newcol))
-    
-    apdict.append(mpf.make_addplot(df[newcol_diff], panel=1,ylabel=newcol_diff))
-    stderr=np.std(df[newcol_diff].to_numpy())
-    apdict.append(mpf.make_addplot(df[newcol_diff], panel=1,ylabel=newcol_diff))
 
-    newcol_diff_1_std_ub='ssa_diff_1std_up_'+str(window_size)
-    newcol_diff_1_std_lb='ssa_diff_1std_low_'+str(window_size)
-    df[newcol_diff_1_std_ub]=stderr
-    df[newcol_diff_1_std_lb]=-stderr
-    apdict.append(mpf.make_addplot(df[newcol_diff_1_std_ub], panel=1,ylabel=newcol_diff_1_std_ub))
-    apdict.append(mpf.make_addplot(df[newcol_diff_1_std_lb], panel=1,ylabel=newcol_diff_1_std_lb))
+    if window_size==window_sizes[int(len(window_sizes)/2)]:
+      newcol_diff='ssa_diff_'+str(window_size)
+      df[newcol_diff]=df['Close']-X_ssa[0]
+      apdict.append(mpf.make_addplot(df['Close']-X_ssa[0], panel=1,secondary_y=False,ylabel='diff'))
+      apdict.append(mpf.make_addplot(df['High']-X_ssa[0], panel=1, secondary_y=False))
+      apdict.append(mpf.make_addplot(df['Low']-X_ssa[0], panel=1, secondary_y=False))
 
-    newcol_diff_2_std_ub='ssa_diff_2std_up_'+str(window_size)
-    newcol_diff_2_std_lb='ssa_diff_2std_low_'+str(window_size)
-    df[newcol_diff_2_std_ub]=2*stderr
-    df[newcol_diff_2_std_lb]=-2*stderr
-    apdict.append(mpf.make_addplot(df[newcol_diff_2_std_ub], panel=1,ylabel=newcol_diff_2_std_ub))
-    apdict.append(mpf.make_addplot(df[newcol_diff_2_std_lb], panel=1,ylabel=newcol_diff_2_std_lb))
+      stderr=np.std(df[newcol_diff].to_numpy())
+      apdict.append(mpf.make_addplot(df[newcol_diff], panel=1,ylabel=newcol_diff, secondary_y=False))
 
-    print(window_size, X_ssa[0][-1], len(X_ssa[0]) )
+      newcol_diff_1_std_ub='ssa_diff_1std_up_'+str(window_size)
+      newcol_diff_1_std_lb='ssa_diff_1std_low_'+str(window_size)
+      df[newcol_diff_1_std_ub]=stderr
+      df[newcol_diff_1_std_lb]=-stderr
+      apdict.append(mpf.make_addplot(df[newcol_diff_1_std_ub], panel=1,width=2,color='b', secondary_y=False))
+      apdict.append(mpf.make_addplot(df[newcol_diff_1_std_lb], panel=1,width=2, color='b', secondary_y=False))
+
+      newcol_diff_2_std_ub='ssa_diff_2std_up_'+str(window_size)
+      newcol_diff_2_std_lb='ssa_diff_2std_low_'+str(window_size)
+      df[newcol_diff_2_std_ub]=2*stderr
+      df[newcol_diff_2_std_lb]=-2*stderr
+      apdict.append(mpf.make_addplot(df[newcol_diff_2_std_ub], panel=1,width=4, color='r', secondary_y=False))
+      apdict.append(mpf.make_addplot(df[newcol_diff_2_std_lb], panel=1,width=4, color='r', secondary_y=False))
+      print(window_size, X_ssa[0][-1], len(X_ssa[0]) )
+
+
 
     #print(X_ssa)
     # Show the results for the first time series and its subseries
@@ -204,7 +215,7 @@ def plot_ssa_compare(df, symbol, window_sizes):
   plt.show()
   '''
 
-  fig1,ax1=mpf.plot(df,type='candle',volume=True,volume_panel=2,addplot=apdict, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False)
+  fig1,ax1=mpf.plot(df,type='candle',volume=True,volume_panel=2,addplot=apdict, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False, title=ticker)
 
 
   # The first subseries consists of the trend of the original time series.
@@ -437,10 +448,10 @@ apdict = [
         #mpf.make_addplot(wf_vol[1],panel=2,ylabel='wf_vol[1]',y_on_right=False),
         mpf.make_addplot((df['coeff_vol']),panel=1,color='r'),
         mpf.make_addplot((df['coeff_vol_01']),panel=1,color='g')]
-fig1,ax1=mpf.plot(df,type='candle',volume=True,addplot=apdict, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False)
+fig1,ax1=mpf.plot(df,type='candle',volume=True,addplot=apdict, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False,title=ticker)
 
 
-fig2,ax2=mpf.plot(df,type='candle',volume=True,addplot=apdict, figsize=figsize,tight_layout=True, panel_ratios=(1,1),style=s,returnfig=True,block=False)
+fig2,ax2=mpf.plot(df,type='candle',volume=True,addplot=apdict, figsize=figsize,tight_layout=True, panel_ratios=(1,1),style=s,returnfig=True,block=False,title=ticker)
 
 apdict = [
         mpf.make_addplot(df["gf3"], width=3, color='r',linestyle='dashdot'),
@@ -458,8 +469,8 @@ apdict = [
         #mpf.make_addplot((df['coeff_vol_01']),panel=1,color='g')
         ]
 
-fig3,ax3=mpf.plot(df,type='candle',volume=False,addplot=apdict, figsize=figsize,tight_layout=True,returnfig=True,block=False)
-fig6,ax6=mpf.plot(df,type='renko',volume=False, figsize=figsize,tight_layout=True,returnfig=True,block=False, renko_params=dict(brick_size=brick_size))
+fig3,ax3=mpf.plot(df,type='candle',volume=False,addplot=apdict, figsize=figsize,tight_layout=True,returnfig=True,block=False,title=ticker)
+fig6,ax6=mpf.plot(df,type='renko',volume=False, figsize=figsize,tight_layout=True,returnfig=True,block=False, renko_params=dict(brick_size=brick_size),title=ticker)
 (fig5, ax5)=plot_wt(df, 'Volume', wf_vol)
 (fig4, ax4)=multi_plot_wt(df, wf_close, wf_high,wf_low)
 
