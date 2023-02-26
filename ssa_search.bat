@@ -1,0 +1,1 @@
+python .\ssa_search.py QQQ,SPX,000001.ss,399001.sz,002049.sz,002230.sz,601318.ss
