@@ -81,8 +81,21 @@ def GetYahooData(symbol, bars=500, interval='1d'):
 
 
 #data = quandl.get('WIKI/%s' % instrument, start_date='2017-01-01', end_date='2012-02-10')
+def calc_ssa(df,colname,window_size=20):
+  X=[]
+  X.append(df[colname])
+  # We decompose the time series into three subseries
 
-def plot_ssa(symbol,df):
+  #groups = [np.arange(i, i + 5) for i in range(0, 11, 5)]
+
+  # Singular Spectrum Analysis
+  ssa = SingularSpectrumAnalysis(window_size=window_size, groups=None)
+  X_ssa = ssa.fit_transform(X)
+
+  print(X_ssa)
+  return (df,X_ssa)
+
+def plot_ssa(symbol,df, window_size, X_ssa):
   '''
   N=20
   t = np.arange(0,N)
@@ -105,18 +118,6 @@ def plot_ssa(symbol,df):
   rng = np.random.RandomState(41)
   X = rng.randn(n_samples, n_timestamps)
   '''
-  X=[]
-  X.append(closes)
-  # We decompose the time series into three subseries
-  window_size = 20
-
-  #groups = [np.arange(i, i + 5) for i in range(0, 11, 5)]
-
-  # Singular Spectrum Analysis
-  ssa = SingularSpectrumAnalysis(window_size=window_size, groups=None)
-  X_ssa = ssa.fit_transform(X)
-
-  print(X_ssa)
   # Show the results for the first time series and its subseries
   '''
   plt.figure(figsize=(16, 6))
@@ -162,7 +163,6 @@ def plot_ssa(symbol,df):
 
   fig1,ax1=mpf.plot(df,type='candle',volume=False,volume_panel=2,addplot=apdict, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False)
   fig1.suptitle(symbol,fontsize=30)
-  plt.show()
 
 '''
 from statsmodels.graphics.tsaplots import plot_acf
@@ -219,8 +219,12 @@ if len(sys.argv) >=2:
 
 for symbol in symbols.split(','):
   df=GetYahooData(symbol, bars=500, interval='1d')
-  closes = df['Adj Close'].rename('close')
-  plot_ssa(symbol,df)
+  #closes = df['Adj Close'].rename('close')
+  window_size=20
+  (df,X_ssa)=calc_ssa(df,'Close',window_size)
+
+  plot_ssa(symbol,df, window_size, X_ssa)
   arimar_predit(df, 3,'predict',5)
 # The first subseries consists of the trend of the original time series.
 # The second and third subseries consist of noise.
+plt.show()
