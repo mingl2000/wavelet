@@ -103,7 +103,7 @@ def GetYahooData(symbol, bars=500, interval='1d'):
 from pyts.decomposition import SingularSpectrumAnalysis
 from numpy import pi
 
-def plot_ssa_compare(df, symbol, window_sizes):
+def plot_ssa_compare(df, symbol, window_sizes, showcomponents=False):
   if window_sizes ==None:
     window_sizes=[5, 10,15,20, 25,30]
   if isinstance(window_sizes, str):
@@ -176,7 +176,16 @@ def plot_ssa_compare(df, symbol, window_sizes):
       #apdict.append(mpf.make_addplot(df['Close']-X_ssa[0], panel=1,secondary_y=False,ylabel='diff'))
       #apdict.append(mpf.make_addplot(df['High']-X_ssa[0], panel=1, secondary_y=False))
       #apdict.append(mpf.make_addplot(df['Low']-X_ssa[0], panel=1, secondary_y=False))
-
+      def plot_ssa_components(colname, X_ssa, window_sizes, cutoff):
+        df['ssa_noise']=df[colname]-X_ssa[0]
+        for i in range(1,window_sizes):
+          if i<=cutoff:
+            df['ssa_noise']=df['ssa_noise']-X_ssa[i]
+            apdict.append(mpf.make_addplot(X_ssa[i], panel=1,secondary_y=False,ylabel='ssa_components',width=cutoff-i+1))
+          else:
+            apdict.append(mpf.make_addplot(df['ssa_noise'], panel=1,secondary_y=False,ylabel='ssa_components'))
+            break
+        pass
       def plot_ssa_diff_std(colname, X_ssa):
         apdict.append(mpf.make_addplot(df[colname]-X_ssa[0], panel=1,secondary_y=False,ylabel='diff'))
         #apdict.append(mpf.make_addplot(df[newcol_diff], panel=1,ylabel=newcol_diff, secondary_y=False))
@@ -197,10 +206,12 @@ def plot_ssa_compare(df, symbol, window_sizes):
         apdict.append(mpf.make_addplot(df[newcol_diff_2_std_ub], panel=1,width=3, color='r', secondary_y=False))
         apdict.append(mpf.make_addplot(df[newcol_diff_2_std_lb], panel=1,width=3, color='r', secondary_y=False))
       
-      plot_ssa_diff_std('Close', X_ssa)
-      plot_ssa_diff_std('High', X_ssa)
-      plot_ssa_diff_std('Low', X_ssa)
-
+      if showcomponents==False:
+        plot_ssa_diff_std('Close', X_ssa)
+        plot_ssa_diff_std('High', X_ssa)
+        plot_ssa_diff_std('Low', X_ssa)
+      else:
+        plot_ssa_components('Close', X_ssa,window_sizes[int(len(window_sizes)/2)],4)
       print(window_size, X_ssa[0][-1], len(X_ssa[0]) )
 
 
@@ -229,8 +240,8 @@ def plot_ssa_compare(df, symbol, window_sizes):
   V_ssa = ssav.fit_transform(V)
   df['V_ssa']=V_ssa[0]
   apdict.append(mpf.make_addplot(df['V_ssa'], secondary_y=False, panel=2))
-
-  fig1,ax1=mpf.plot(df,type='candle',volume=True,volume_panel=2,addplot=apdict, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False, title=ticker)
+  if showcomponents:
+    fig1,ax1=mpf.plot(df,type='candle',volume=True,volume_panel=2,addplot=apdict, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False, title=ticker)
 
 
   # The first subseries consists of the trend of the original time series.
@@ -491,7 +502,8 @@ fig6,ax6=mpf.plot(df,type='renko',volume=False, figsize=figsize,tight_layout=Tru
 
 #plot_ssa_compare
 window_sizes='5, 10,15,20, 25,30'
-plot_ssa_compare(df, ticker, window_sizes)
+plot_ssa_compare(df, ticker, window_sizes,True)
+plot_ssa_compare(df, ticker, window_sizes,False)
 
 #cursor = MultiCursor(None, tuple(ax1)+tuple(ax2)+tuple(ax3)+tuple(ax4)+tuple(ax5), color='r',lw=0.5, horizOn=True, vertOn=True)
 plt.show()
