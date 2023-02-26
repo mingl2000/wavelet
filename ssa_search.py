@@ -57,13 +57,13 @@ def GetYahooData(symbol, bars=500, interval='1d'):
   dataFileName="data/"+symbol+'_' +period+'_'+ interval +".csv"
   dataFileName1="data/"+symbol+'_' +period+'_'+ 'max' +".csv"
   if interval.endswith(('d','D')) and datetime.datetime.now().hour>=13 and (exists(dataFileName)or exists(dataFileName1)):
-    print('read yahoo data from cache')
+    #print('read yahoo data from cache')
     if exists(dataFileName1):
       dataFileName=dataFileName1
     df=pd.read_csv(dataFileName, header=0, index_col=0, encoding='utf-8', parse_dates=True)
     #df.index=df["Date"]
   else:
-    print('read yahoo data from web')
+    #print('read yahoo data from web')
     df = yf.download(tickers=symbol, period=period, interval=interval)
     df.to_csv(dataFileName, index=True, date_format='%Y-%m-%d %H:%M:%S')
   #dataFileName="data/"+symbol+".csv"
@@ -111,16 +111,35 @@ for symbol in symbols.split(','):
   def upordown(arr):
     if round(arr[-1],2)==round(arr[-2],2):
       return '=='
-    elif round(arr[-1],2)>round(arr[-2],2):
+    elif round(arr[-1],2)>round(arr[-2],2):      
       return 'UP'
     else:
       return 'DOWN'
+  def slope(arr):
+    return (arr[-1]-arr[-2])/arr[-1]*100
+
+  def acceration(arr):
+    v0=arr[-1]-arr[-2]
+    v1=arr[-2]-arr[-3]
+    if round(v0,2)==round(v1,2):
+      return 'no acc'
+    elif round(v0,2)>round(v1,2):
+      if v0>0:
+        return 'up-acc'
+      else:
+        return 'down-slowed'
+    else:
+      if v0 >0:
+        return 'up-slowed'
+      else:
+        return 'down-acc'
+
   def print_ssa(symbol,X_ssa, V_ssa):    
     #fmt="{0:18}{1:8.2f} * {2:8.2f} {3:4} {4:8.2f} {5:4} * {6:8.2f} {7:4} {8:8.2f} {9:4} * {10:8.2f} {11:4} {12:8.2f} {13:4} * {14:18,.0f} {15:4} {16:18,.0f} {17:4} {18:18,.2f} {19:18,.2f}"
     #print(fmt.format(df.index[-i-1].strftime("%m/%d/%Y %H:%M"), df['Close'][-i-1], wf_close[0][-i-1],closedir,wf_close[1][-i-1],close1dir,wf_high[0][-i-1],highdir,wf_high[1][-i-1],high1dir,wf_low[0][-i-1],lowdir,wf_low[1][-i-1],low1dir,wf_vol[0][-i-1],voldir,wf_vol[1][-i-1],vol1dir, gf3[i], gf5[i]))
-    fmt="{0:18} {1:8.2f} {2:4} * {3:8.2f} * {4:4} * {5:18,.0f} * {6:4} * {7:18,.0f} {8:4} "
+    fmt="{0:8} {1:8.2f} {2:4} {3:8.2f} {4:11}* {5:8.2f} {6:4} {7:8.2f} *** {8:18,.0f} {9:4} {10:8.2f} {11:11} * {12:18,.0f} {13:4}  {14:8.2f}"
 
-    print(fmt.format(symbol, X_ssa[0][-1],upordown(X_ssa[0]), X_ssa[1][-1],upordown(X_ssa[1]), V_ssa[0][-1],upordown(V_ssa[0]), V_ssa[1][-1],upordown(V_ssa[1]) ))
+    print(fmt.format(symbol, X_ssa[0][-1],upordown(X_ssa[0]),slope(X_ssa[0]),acceration(X_ssa[0]), X_ssa[1][-1],upordown(X_ssa[1]), slope(X_ssa[1]), V_ssa[0][-1],upordown(V_ssa[0]),slope(V_ssa[0]), acceration(V_ssa[0]),V_ssa[1][-1],upordown(V_ssa[1]),slope(V_ssa[1]) ))
     pass
 
   print_ssa(symbol,X_ssa, V_ssa)
