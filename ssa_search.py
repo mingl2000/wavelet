@@ -55,8 +55,11 @@ def GetYahooData(symbol, bars=500, interval='1d'):
   #  period=str(days)+'wk'
   
   dataFileName="data/"+symbol+'_' +period+'_'+ interval +".csv"
-  if interval.endswith(('d','D')) and datetime.datetime.now().hour>=13 and exists(dataFileName):
+  dataFileName1="data/"+symbol+'_' +period+'_'+ 'max' +".csv"
+  if interval.endswith(('d','D')) and datetime.datetime.now().hour>=13 and (exists(dataFileName)or exists(dataFileName1)):
     print('read yahoo data from cache')
+    if exists(dataFileName1):
+      dataFileName=dataFileName1
     df=pd.read_csv(dataFileName, header=0, index_col=0, encoding='utf-8', parse_dates=True)
     #df.index=df["Date"]
   else:
@@ -80,91 +83,46 @@ def GetYahooData(symbol, bars=500, interval='1d'):
 
 import sys
 if len(sys.argv) <2:
-  symbol='QQQ'
+  symbols='QQQ,SPX'
 if len(sys.argv) >=2:
-  symbol=sys.argv[1]
-
+  symbols=sys.argv[1]
 
 #data = quandl.get('WIKI/%s' % instrument, start_date='2017-01-01', end_date='2012-02-10')
 
+for symbol in symbols.split(','):
+  df=GetYahooData(symbol, bars=500, interval='1d')
 
-df=GetYahooData(symbol, bars=500, interval='1d')
-closes = df['Adj Close'].rename('close')
-'''
-N=20
-t = np.arange(0,N)
+  # We decompose the time series into three subseries
+  window_size = 20
 
-trend = 0.001 * (t - 100)**2
+  #groups = [np.arange(i, i + 5) for i in range(0, 11, 5)]
 
-p1, p2 = 20, 30
+  # Singular Spectrum Analysis
+  ssa = SingularSpectrumAnalysis(window_size=window_size, groups=None)
+  X=[]
+  closes = df['Close'].rename('close')
+  X.append(df['Close'])
+  X_ssa = ssa.fit_transform(X)
 
-periodic1 = 2 * np.sin(2*pi*t/p1)
-periodic2 = 0.75 * np.sin(2*pi*t/p2)
-
-np.random.seed(123) # So we generate the same noisy time series every time.
-noise = 2 * (np.random.rand(N) - 0.5)
-F = trend + periodic1 + periodic2 + noise
-
-# Parameters
-n_samples, n_timestamps = 1000, 10
-
-# Toy dataset
-rng = np.random.RandomState(41)
-X = rng.randn(n_samples, n_timestamps)
-'''
-X=[]
-X.append(closes)
-# We decompose the time series into three subseries
-window_size = 20
-
-#groups = [np.arange(i, i + 5) for i in range(0, 11, 5)]
-
-# Singular Spectrum Analysis
-ssa = SingularSpectrumAnalysis(window_size=window_size, groups=None)
-X_ssa = ssa.fit_transform(X)
-
-print(X_ssa)
-# Show the results for the first time series and its subseries
-plt.figure(figsize=(16, 6))
-
-ax1 = plt.subplot(211)
-ax1.plot(X_ssa[0],  label='X_ssa[0]')
-ax1.plot(closes.to_numpy(), 'o-', label='Original')
-ax1.legend(loc='best', fontsize=14)
-
-ax2 = plt.subplot(212)
-for i in range(1, window_size):
-    ax2.plot(X_ssa[i], 'o--', label='SSA {0}'.format(i + 1))
-ax2.legend(loc='best', fontsize=14)
-
-plt.suptitle('Singular Spectrum Analysis', fontsize=20)
-
-plt.tight_layout()
-plt.subplots_adjust(top=0.88)
-plt.show()
-
-
-import mplfinance as mpf
-figsize=(26,13)
-mc = mpf.make_marketcolors(
-                           volume='lightgray'
-                           )
-
-                          
-s  = mpf.make_mpf_style(marketcolors=mc, gridaxis='both')
-apdict = []
-for i in range(0, window_size):
-    newcol='ssa_' +str(i)
-    df[newcol]=X_ssa[i]
-    if i==0:
-      apdict.append(mpf.make_addplot(df[newcol], panel=0, secondary_y=False))
+  V=[]
+  V.append(df['Volume'])
+  V_ssa = ssa.fit_transform(V)
+  
+  def upordown(arr):
+    if round(arr[-1],2)==round(arr[-2],2):
+      return '=='
+    elif round(arr[-1],2)>round(arr[-2],2):
+      return 'UP'
     else:
-      apdict.append(mpf.make_addplot(df[newcol], panel=1, secondary_y=False))
+      return 'DOWN'
+  def print_ssa(symbol,X_ssa, V_ssa):    
+    #fmt="{0:18}{1:8.2f} * {2:8.2f} {3:4} {4:8.2f} {5:4} * {6:8.2f} {7:4} {8:8.2f} {9:4} * {10:8.2f} {11:4} {12:8.2f} {13:4} * {14:18,.0f} {15:4} {16:18,.0f} {17:4} {18:18,.2f} {19:18,.2f}"
+    #print(fmt.format(df.index[-i-1].strftime("%m/%d/%Y %H:%M"), df['Close'][-i-1], wf_close[0][-i-1],closedir,wf_close[1][-i-1],close1dir,wf_high[0][-i-1],highdir,wf_high[1][-i-1],high1dir,wf_low[0][-i-1],lowdir,wf_low[1][-i-1],low1dir,wf_vol[0][-i-1],voldir,wf_vol[1][-i-1],vol1dir, gf3[i], gf5[i]))
+    fmt="{0:18} {1:8.2f} {2:4} * {3:8.2f} * {4:4} * {5:18,.0f} * {6:4} * {7:18,.0f} {8:4} "
 
+    print(fmt.format(symbol, X_ssa[0][-1],upordown(X_ssa[0]), X_ssa[1][-1],upordown(X_ssa[1]), V_ssa[0][-1],upordown(V_ssa[0]), V_ssa[1][-1],upordown(V_ssa[1]) ))
+    pass
 
-fig1,ax1=mpf.plot(df,type='candle',volume=False,volume_panel=2,addplot=apdict, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False)
-plt.show()
+  print_ssa(symbol,X_ssa, V_ssa)
+# Show the results for the first time series and its subseries
 
-
-# The first subseries consists of the trend of the original time series.
-# The second and third subseries consist of noise.
