@@ -14,6 +14,9 @@ It is implemented as :class:`pyts.decomposition.SingularSpectrumAnalysis`.
 
 # Author: Johann Faouzi <johann.faouzi@gmail.com>
 # License: BSD-3-Clause
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
+#warnings.simplefilter(action='ignore', category=ValueWarning)
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -91,11 +94,13 @@ def calc_ssa(df,colname,window_size=20):
   # Singular Spectrum Analysis
   ssa = SingularSpectrumAnalysis(window_size=window_size, groups=None)
   X_ssa = ssa.fit_transform(X)
-
+  for i in range(window_size):
+    ssa_col=colname +'_ssa_'+str(i)
+    df[ssa_col]=X_ssa[i]
   print(X_ssa)
-  return (df,X_ssa)
+  return df
 
-def plot_ssa(symbol,df, window_size, X_ssa):
+def plot_ssa(symbol,df, window_size, X_ssa,dates,predict):
   '''
   N=20
   t = np.arange(0,N)
@@ -148,6 +153,8 @@ def plot_ssa(symbol,df, window_size, X_ssa):
                             
   s  = mpf.make_mpf_style(marketcolors=mc, gridaxis='both')
   apdict = []
+
+  apdict.append(mpf.make_addplot((dates,predict), panel=0, width=3,secondary_y=False, color='m'))
   for i in range(0, int(window_size/2)):
       newcol='ssa_' +str(i)
       df[newcol]=X_ssa[i]
@@ -176,14 +183,17 @@ from statsmodels.graphics.tsaplots import plot_predict
 '''
 from statsmodels.tsa.arima.model import ARIMA
 from pandas.tseries.offsets import DateOffset
-def arimar_predit(df, numberofssacomps, outcol, days2predict=5):
+def arimar_predit(df, colname,numberofssacomps, outcol, days2predict=5):
   print('')
+  
   for ssa_comp_id in range(numberofssacomps):
-    incol='ssa_'+str(ssa_comp_id)
-    arima_model=ARIMA(df[incol], order=(1,1,1))
+    #incol='ssa_'+str(ssa_comp_id)
+    ssa_col=colname +'_ssa_'+str(ssa_comp_id)
+    arima_model=ARIMA(df[ssa_col], order=(1,1,1))
     model=arima_model.fit()
     forecast_object = model.get_forecast(days2predict)
     mean=forecast_object.predicted_mean
+    
     #print(ssa_comp_id, mean)
     
     
@@ -191,16 +201,42 @@ def arimar_predit(df, numberofssacomps, outcol, days2predict=5):
     
     if ssa_comp_id==0:
       meantotal = mean
-      dates = mean.index
-      dates=[df.index[-1]+ DateOffset(days=x)for x in range(0,days2predict)]
+      #dates=[df.index[-1]+ DateOffset(days=x)for x in range(0,days2predict)]
     else:
       meantotal=mean+meantotal
+      
       #print(ssa_comp_id, meantotal)
 
+
   print('predictions -------------------')
+  def nextworkday(dt):
+    if dt.date().weekday()<4:
+        days2add=1
+    elif dt.date().weekday()==4: # friday
+        days2add=3
+    elif dt.date().weekday()==5: # sat
+        days2add=2
+    else:
+        days2add=1
+
+    return dt+datetime.timedelta(days=days2add)
+
+  #df=df.append(meantotal)
+  #return df
+  df['predict']=None
   for i in range(len(meantotal)):
-    print(dates[i],round(meantotal.to_numpy()[i],2))
-  return (dates, meantotal.to_numpy())
+    dt=nextworkday(df.index[-1])
+    predictprice=round(meantotal[len(df)],2)
+    df=df.append(pd.DataFrame(index=[dt]))
+    #df = pd.concat(df,pd.DataFrame(index=[dt])) 
+    df.loc[df.index[-1],'predict']=predictprice
+    print(dt.date(),predictprice)
+
+  #newdf=pd.DataFrame(columns=['date',''])
+  #df.append(pd.DataFrame(index=[dates]))
+  
+  return df
+
 
 
 
@@ -208,7 +244,7 @@ def arimar_predit(df, numberofssacomps, outcol, days2predict=5):
 
 # Calculate the confidence intervals
 
-  pass
+  #pass
 
 import sys
 if len(sys.argv) <2:
@@ -221,10 +257,12 @@ for symbol in symbols.split(','):
   df=GetYahooData(symbol, bars=500, interval='1d')
   #closes = df['Adj Close'].rename('close')
   window_size=20
-  (df,X_ssa)=calc_ssa(df,'Close',window_size)
+  colname='Close'
+  df=calc_ssa(df,colname,window_size)
 
-  plot_ssa(symbol,df, window_size, X_ssa)
-  arimar_predit(df, 3,'predict',5)
+  
+  df=arimar_predit(df,colname, 3,'predict',5)
+  #plot_ssa(symbol,df, window_size, X_ssa, dates,predict)
 # The first subseries consists of the trend of the original time series.
 # The second and third subseries consist of noise.
 plt.show()
