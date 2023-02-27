@@ -118,7 +118,7 @@ def plot_ssa(symbol):
   ssa = SingularSpectrumAnalysis(window_size=window_size, groups=None)
   X_ssa = ssa.fit_transform(X)
 
-  print(X_ssa)
+  #print(X_ssa)
   # Show the results for the first time series and its subseries
   '''
   plt.figure(figsize=(16, 6))
@@ -164,7 +164,7 @@ def plot_ssa(symbol):
 
   fig1,ax1=mpf.plot(df,type='candle',volume=False,volume_panel=2,addplot=apdict, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False)
   fig1.suptitle(symbol,fontsize=30)
-  plt.show()
+  
 
 
 import sys
@@ -175,5 +175,6 @@ if len(sys.argv) >=2:
 
 for symbol in symbols.split(','):
   plot_ssa(symbol)
+plt.show()
 # The first subseries consists of the trend of the original time series.
 # The second and third subseries consist of noise.
