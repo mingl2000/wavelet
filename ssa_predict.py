@@ -100,7 +100,7 @@ def calc_ssa(df,colname,window_size=20):
   print(X_ssa)
   return df
 
-def plot_ssa(symbol,df, window_size, X_ssa,dates,predict):
+def plot_ssa(symbol,df, window_size,predictcols):
   '''
   N=20
   t = np.arange(0,N)
@@ -153,11 +153,12 @@ def plot_ssa(symbol,df, window_size, X_ssa,dates,predict):
                             
   s  = mpf.make_mpf_style(marketcolors=mc, gridaxis='both')
   apdict = []
-
-  apdict.append(mpf.make_addplot((dates,predict), panel=0, width=3,secondary_y=False, color='m'))
+  for predictcol in predictcols:
+    apdict.append(mpf.make_addplot(df[predictcol], panel=0, width=3,secondary_y=False, color='m'))
+  
   for i in range(0, int(window_size/2)):
-      newcol='ssa_' +str(i)
-      df[newcol]=X_ssa[i]
+      newcol='Close_ssa_' +str(i)
+      df[newcol]=df[newcol]
       if i==0:
         apdict.append(mpf.make_addplot(df[newcol], panel=0, width=3,secondary_y=False))
       else:
@@ -223,13 +224,14 @@ def arimar_predit(df, colname,numberofssacomps, outcol, days2predict=5):
 
   #df=df.append(meantotal)
   #return df
-  df['predict']=None
+  predictcol=colname+'_predict'
+  df[predictcol]=None
   for i in range(len(meantotal)):
     dt=nextworkday(df.index[-1])
     predictprice=round(meantotal[len(df)],2)
     df=df.append(pd.DataFrame(index=[dt]))
     #df = pd.concat(df,pd.DataFrame(index=[dt])) 
-    df.loc[df.index[-1],'predict']=predictprice
+    df.loc[df.index[-1],predictcol]=predictprice
     print(dt.date(),predictprice)
 
   #newdf=pd.DataFrame(columns=['date',''])
@@ -262,6 +264,7 @@ for symbol in symbols.split(','):
 
   
   df=arimar_predit(df,colname, 3,'predict',5)
+  plot_ssa(symbol,df, window_size, ['Close_predict'])
   #plot_ssa(symbol,df, window_size, X_ssa, dates,predict)
 # The first subseries consists of the trend of the original time series.
 # The second and third subseries consist of noise.
