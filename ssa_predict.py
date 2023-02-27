@@ -86,7 +86,9 @@ def GetYahooData(symbol, bars=500, interval='1d'):
 #data = quandl.get('WIKI/%s' % instrument, start_date='2017-01-01', end_date='2012-02-10')
 def calc_ssa(df,colname,window_size=20):
   X=[]
-  X.append(df[colname])
+  newdf=df[colname]
+  newdf=newdf.dropna()
+  X.append(newdf)
   # We decompose the time series into three subseries
 
   #groups = [np.arange(i, i + 5) for i in range(0, 11, 5)]
@@ -100,7 +102,7 @@ def calc_ssa(df,colname,window_size=20):
   print(X_ssa)
   return df
 
-def plot_ssa(symbol,df, window_size,predictcols):
+def plot_ssa(symbol,df, window_size,colnames):
   '''
   N=20
   t = np.arange(0,N)
@@ -153,20 +155,20 @@ def plot_ssa(symbol,df, window_size,predictcols):
                             
   s  = mpf.make_mpf_style(marketcolors=mc, gridaxis='both')
   apdict = []
-  for predictcol in predictcols:
+  for colname in colnames:
+    predictcol=colname +'_predict'
     apdict.append(mpf.make_addplot(df[predictcol], panel=0, width=3,secondary_y=False, color='m'))
+    ssacol=colname +'_ssa_0'
+    apdict.append(mpf.make_addplot(df[ssacol], panel=0, width=3,secondary_y=False))
   
-  for i in range(0, int(window_size/2)):
+  for i in range(1, int(window_size/2)):
       newcol='Close_ssa_' +str(i)
       df[newcol]=df[newcol]
-      if i==0:
-        apdict.append(mpf.make_addplot(df[newcol], panel=0, width=3,secondary_y=False))
+      if i>=4:
+        width=1
       else:
-        if i>=4:
-          width=1
-        else:
-          width=5-i
-        apdict.append(mpf.make_addplot(df[newcol], panel=1, width=width,secondary_y=False))
+        width=5-i
+      apdict.append(mpf.make_addplot(df[newcol], panel=1, width=width,secondary_y=False))
 
 
   fig1,ax1=mpf.plot(df,type='candle',volume=False,volume_panel=2,addplot=apdict, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False)
@@ -184,30 +186,31 @@ from statsmodels.graphics.tsaplots import plot_predict
 '''
 from statsmodels.tsa.arima.model import ARIMA
 from pandas.tseries.offsets import DateOffset
-def arimar_predit(df, colname,numberofssacomps, outcol, days2predict=5):
+def arimar_predit(df, colnames,numberofssacomps,  days2predict=5):
   print('')
-  
-  for ssa_comp_id in range(numberofssacomps):
-    #incol='ssa_'+str(ssa_comp_id)
-    ssa_col=colname +'_ssa_'+str(ssa_comp_id)
-    arima_model=ARIMA(df[ssa_col], order=(1,1,1))
-    model=arima_model.fit()
-    forecast_object = model.get_forecast(days2predict)
-    mean=forecast_object.predicted_mean
-    
-    #print(ssa_comp_id, mean)
-    
-    
-    conf_int = forecast_object.conf_int()
-    
-    if ssa_comp_id==0:
-      meantotal = mean
-      #dates=[df.index[-1]+ DateOffset(days=x)for x in range(0,days2predict)]
-    else:
-      meantotal=mean+meantotal
-      
-      #print(ssa_comp_id, meantotal)
-
+  meantotal_dict={}
+  for colname in colnames:
+    for ssa_comp_id in range(numberofssacomps):
+        #incol='ssa_'+str(ssa_comp_id)
+        ssa_col=colname +'_ssa_'+str(ssa_comp_id)
+        arima_model=ARIMA(df[ssa_col], order=(1,1,1))
+        model=arima_model.fit()
+        forecast_object = model.get_forecast(days2predict)
+        mean=forecast_object.predicted_mean
+        
+        #print(ssa_comp_id, mean)
+        
+        
+        conf_int = forecast_object.conf_int()
+        
+        if ssa_comp_id==0:
+            meantotal = mean
+        #dates=[df.index[-1]+ DateOffset(days=x)for x in range(0,days2predict)]
+        else:
+            meantotal=mean+meantotal
+        
+        #print(ssa_comp_id, meantotal)
+    meantotal_dict[colname]=meantotal
 
   print('predictions -------------------')
   def nextworkday(dt):
@@ -224,16 +227,21 @@ def arimar_predit(df, colname,numberofssacomps, outcol, days2predict=5):
 
   #df=df.append(meantotal)
   #return df
-  predictcol=colname+'_predict'
-  df[predictcol]=None
+  for  colname in colnames:
+    predictcol=colname+'_predict'
+    df[predictcol]=None
   for i in range(len(meantotal)):
     dt=nextworkday(df.index[-1])
-    predictprice=round(meantotal[len(df)],2)
+    
     df=df.append(pd.DataFrame(index=[dt]))
-    #df = pd.concat(df,pd.DataFrame(index=[dt])) 
-    df.loc[df.index[-1],predictcol]=predictprice
-    print(dt.date(),predictprice)
-
+    #df = pd.concat(df,pd.DataFrame(index=[dt]))
+    print(dt.date(), end =" ")
+    for  colname in colnames:
+       predictcol=colname+'_predict'
+       predictprice=round(meantotal_dict[colname][len(df)-1],2)
+       df.loc[df.index[-1],predictcol]=predictprice
+       print(predictprice , end =" ")
+    print()
   #newdf=pd.DataFrame(columns=['date',''])
   #df.append(pd.DataFrame(index=[dates]))
   
@@ -259,12 +267,14 @@ for symbol in symbols.split(','):
   df=GetYahooData(symbol, bars=500, interval='1d')
   #closes = df['Adj Close'].rename('close')
   window_size=20
-  colname='Close'
-  df=calc_ssa(df,colname,window_size)
-
+  colnames=['Close','High','Low']
+  for colname in colnames:
+  #for colname in ['Close']:
+    df=calc_ssa(df,colname,window_size)    
+    
+  df=arimar_predit(df,colnames, 3,5)
+  plot_ssa(symbol,df, window_size, colnames)
   
-  df=arimar_predit(df,colname, 3,'predict',5)
-  plot_ssa(symbol,df, window_size, ['Close_predict'])
   #plot_ssa(symbol,df, window_size, X_ssa, dates,predict)
 # The first subseries consists of the trend of the original time series.
 # The second and third subseries consist of noise.
