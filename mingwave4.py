@@ -38,6 +38,7 @@ from matplotlib.widgets import MultiCursor
 from os.path import exists
 from talib import ATR
 from scipy.ndimage import gaussian_filter1d
+from termcolor import colored
 # df = 'ohlc dataframe'
 import warnings
 warnings.filterwarnings('ignore')
@@ -290,47 +291,27 @@ def plot_wt(df, colname, wavelet):
     plt.show(block=False)
     return (fig, ax)
 
-
+    
 def printwavelet(daysprint, df, wf_close, wf_high, wf_low, wf_vol):
+  def getdirection(arr,i):
+    if round(arr[i],2)==round(arr[i-1],2):
+      return "=="
+    elif round(arr[i],2)>round(arr[i-1],2):
+      return colored('UP','green')
+    else:
+      return colored('Down','red')
+
   print('day                  close         close1       high             high1         low               low1              volume                  volume1                   Gaussian Filter3                   Gaussian Filter5')
   fmt="{0:18}{1:8.2f} * {2:8.2f} {3:4} {4:8.2f} {5:4} * {6:8.2f} {7:4} {8:8.2f} {9:4} * {10:8.2f} {11:4} {12:8.2f} {13:4} * {14:18,.0f} {15:4} {16:18,.0f} {17:4} {18:18,.2f} {19:18,.2f}"
   for i in range(daysprint,-1,-1):  
-    if wf_close[0][-i-1]>wf_close[0][-i-2]:
-      closedir='UP'
-    else:
-      closedir='DOWN'
-    if wf_close[1][-i-1]>wf_close[1][-i-2]:
-      close1dir='UP'
-    else:
-      close1dir='DOWN'
-
-    if wf_high[0][-i-1]>wf_high[0][-i-2]:
-      highdir='UP'
-    else:
-      highdir='DOWN'
-    if wf_high[1][-i-1]>wf_high[1][-i-2]:
-      high1dir='UP'
-    else:
-      high1dir='DOWN'
-
-    if wf_low[0][-i-1]>wf_low[0][-i-2]:
-      lowdir='UP'
-    else:
-      lowdir='DOWN'
-    if wf_low[1][-i-1]>wf_low[1][-i-2]:
-      low1dir='UP'
-    else:
-      low1dir='DOWN'
-    
-    if wf_vol[0][-i-1]>wf_vol[0][-i-2]:
-      voldir='UP'
-    else:
-      voldir='DOWN'
-    if wf_vol[1][-i-1]>wf_vol[1][-i-2]:
-      vol1dir='UP'
-    else:
-      vol1dir='DOWN'
-    
+    closedir=getdirection(wf_close[0],-i-1)
+    close1dir=getdirection(wf_close[1],-i-1)
+    highdir=getdirection(wf_high[0],-i-1)
+    high1dir=getdirection(wf_high[1],-i-1)
+    lowdir=getdirection(wf_low[0],-i-1)
+    low1dir=getdirection(wf_low[1],-i-1)
+    voldir=getdirection(wf_vol[0],-i-1)
+    vol1dir=getdirection(wf_vol[1],-i-1)
     print(fmt.format(df.index[-i-1].strftime("%m/%d/%Y %H:%M"), df['Close'][-i-1], wf_close[0][-i-1],closedir,wf_close[1][-i-1],close1dir,wf_high[0][-i-1],highdir,wf_high[1][-i-1],high1dir,wf_low[0][-i-1],lowdir,wf_low[1][-i-1],low1dir,wf_vol[0][-i-1],voldir,wf_vol[1][-i-1],vol1dir, gf3[i], gf5[i]))
 
 
