@@ -41,6 +41,7 @@ from scipy.ndimage import gaussian_filter1d
 # df = 'ohlc dataframe'
 import warnings
 warnings.filterwarnings('ignore')
+from YahooData import GetYahooData
 # In[2]:
 
 
@@ -51,6 +52,7 @@ def getATR(df, ATR_period):
   return ATR(df["High"], df["Low"], df["Close"], ATR_period)[-1]
 
 # In[3]:
+'''
 def GetYahooData(symbol, bars=500, interval='1d'):
   #start=datetime.date.today()-datetime.timedelta(days=days)
   #end=datetime.date.today()
@@ -99,7 +101,7 @@ def GetYahooData(symbol, bars=500, interval='1d'):
   #df["datefmt"]=df.index.strftime('%m/%d/%Y')
   
   return df
-
+'''
 #SSA_compare
 from pyts.decomposition import SingularSpectrumAnalysis
 from numpy import pi
