@@ -39,7 +39,8 @@ from os.path import exists
 from talib import ATR
 from scipy.ndimage import gaussian_filter1d
 # df = 'ohlc dataframe'
-
+import warnings
+warnings.filterwarnings('ignore')
 # In[2]:
 
 
