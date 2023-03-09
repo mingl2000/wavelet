@@ -41,7 +41,7 @@ from scipy.ndimage import gaussian_filter1d
 # df = 'ohlc dataframe'
 import warnings
 warnings.filterwarnings('ignore')
-from YahooData import GetYahooData
+from YahooData import *
 # In[2]:
 
 
@@ -367,7 +367,7 @@ if len(sys.argv) >=9:
 
 
 #ticker="SPX"
-df= GetYahooData(ticker,historylen,interval)
+df= GetYahooData_v2(ticker,historylen,interval)
 x= df["Close"].to_numpy() 
 gf2 = gaussian_filter1d(x, 2)
 gf3 = gaussian_filter1d(x, 3)

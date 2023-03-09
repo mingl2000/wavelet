@@ -9,11 +9,14 @@ import mplfinance as mpf
 import datetime 
 import sys
 from talib import ATR
-
+import warnings
+from termcolor import colored
+from YahooData import *
+warnings.filterwarnings('ignore')
 style.use('ggplot')
 def getATR(df, ATR_period):
   return ATR(df["High"], df["Low"], df["Close"], ATR_period)[-1]
-
+'''
 def get1mYahooData(ticker):
     data=[]
     
@@ -59,6 +62,8 @@ def getYahooData(ticker, interval='1m'):
 
     df = yf.download(tickers=ticker, period=period, interval=interval)
     return df
+'''
+
 
 def get_upper_lower(cluster_centers, price):
     upper=-1
@@ -105,7 +110,7 @@ if len(sys.argv) >=7:
 
 
 
-data=getYahooData(ticker, interval)
+data=getYahooData_v1(ticker,interval)
 data.tail()
 brick_size=brick_size*getATR(data, 14)
 
@@ -159,11 +164,14 @@ for i in low_centers:
 
 (upper,lower)=get_upper_lower(low_centers, lastPrice)    
 fmt="top custers: i={0}     low={1:8.2f} {3:1}   wcss={2:8.2f}"
+
 for i in range(len(low_centers)):
     if i==upper or i==lower:
         mark='*'
+        color='red'
     else:
         mark=' '
+        color=None
     if i<3:
         colors.append('b')
         linewidths.append(len(low_centers)+2-i)
@@ -171,7 +179,7 @@ for i in range(len(low_centers)):
         colors.append('g')
         linewidths.append(len(low_centers)+2-i)
     
-    print(fmt.format(i, low_centers[i][0],wcss_low[i], mark ))
+    print(colored(fmt.format(i, low_centers[i][0],wcss_low[i], mark ),color))
 print('')
 for i in high_centers:
     hlines.append(i[0])
@@ -180,11 +188,14 @@ for i in high_centers:
 
 (upper,lower)=get_upper_lower(high_centers, lastPrice)
 fmt="top custers: i={0}     high={1:8.2f} {3:1}    wcss={2:8.2f}"
+
 for i in range(len(high_centers)):
     if i==upper or i==lower:
         mark='*'
+        color='red'
     else:
         mark=' '
+        color=None
     if i<3:
         colors.append('violet')
         linewidths.append(len(low_centers)+2-i)
@@ -193,7 +204,7 @@ for i in range(len(high_centers)):
         linewidths.append(len(low_centers)+2-i)
 
     linewidths.append(len(high_centers)+2-i)
-    print(fmt.format(i, high_centers[i][0],wcss_low[i], mark ))
+    print(colored(fmt.format(i, high_centers[i][0],wcss_low[i], mark ),color))
 print('')
 fmt="{0:10} top {1:2} clusters {2:18}     {3:8.2f}"
 title=fmt.format(ticker, noclusters, lastTS.strftime("%m/%d/%Y %H:%M"), lastPrice)
