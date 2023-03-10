@@ -310,7 +310,7 @@ def printwavelet(daysprint, df, wf_close, wf_high, wf_low, wf_vol,gf3,gf5):
     else:
       return colored(data,'red')
 
-  print('day                            close           close1     high         low       volume     volume1  Gaussian F3  Gaussian F5')
+  print('day            Close           Wclose          Wclose1     high         low       volume     volume1  Gaussian F3  Gaussian F5')
   fmt="{0:18}{1} * {2} {3:4}  {4} * {5} * {6}* {7}* {8} {9} {10}"
   for i in range(daysprint,-1,-1):  
     closedir=getdirection(wf_close[0],-i-1)
