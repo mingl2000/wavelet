@@ -301,8 +301,17 @@ def printwavelet(daysprint, df, wf_close, wf_high, wf_low, wf_vol,gf3,gf5):
     else:
       return colored('Down','red')
 
-  print('day                  close         close1       high                     low                  volume                  volume1                   Gaussian Filter3                   Gaussian Filter5')
-  fmt="{0:18}{1:8.2f} * {2:8.2f} {3:4}  {4:8.2f} {5:4} * {6:8.2f} {7:4}  * {8:8.2f} {9:4}  * {10:18,.0f} {11:4} {12:18,.0f} {13:4} * {14:18,.2f} {15:18,.2f}"
+  def getcorloreddata(arr,i,digits=2, fmt="{0:8.2f}"):
+    data=fmt.format(arr[i])
+    if round(arr[i],2)==round(arr[i-1],2):
+      return data
+    elif round(arr[i],2)>round(arr[i-1],2):
+      return colored(data,'green')
+    else:
+      return colored(data,'red')
+
+  print('day                            close           close1     high         low       volume     volume1  Gaussian F3  Gaussian F5')
+  fmt="{0:18}{1} * {2} {3:4}  {4} * {5} * {6}* {7}* {8} {9} {10}"
   for i in range(daysprint,-1,-1):  
     closedir=getdirection(wf_close[0],-i-1)
     close1dir=getdirection(wf_close[1],-i-1)
@@ -312,7 +321,16 @@ def printwavelet(daysprint, df, wf_close, wf_high, wf_low, wf_vol,gf3,gf5):
     low1dir=getdirection(wf_low[1],-i-1)
     voldir=getdirection(wf_vol[0],-i-1)
     vol1dir=getdirection(wf_vol[1],-i-1)
-    print(fmt.format(df.index[-i-1].strftime("%m/%d/%Y %H:%M"), df['Close'][-i-1], wf_close[0][-i-1],closedir,wf_close[1][-i-1],close1dir,wf_high[0][-i-1],highdir,wf_low[0][-i-1],lowdir,wf_vol[0][-i-1],voldir,wf_vol[1][-i-1],vol1dir, gf3[i], gf5[i]))
+    print(fmt.format(df.index[-i-1].strftime("%m/%d/%Y %H:%M"), 
+      getcorloreddata( df['Close'],-i-1), 
+      getcorloreddata(wf_close[0],-i-1),closedir,
+      getcorloreddata(wf_close[1],-i-1),
+      getcorloreddata(wf_high[0],-i-1),
+      getcorloreddata(wf_low[0],-i-1),
+      getcorloreddata(wf_vol[0],-i-1,0,"{0:11.0f}"),
+      getcorloreddata(wf_vol[1],-i-1,0,"{0:10.0f}"),
+      getcorloreddata( gf3,i), 
+      getcorloreddata(gf5,i)))
 
 
 brick_size=0.1 # real brick_size will be brick_size*ATR(14)
