@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import mplfinance as mpf
 from YahooData import *
 import sys
-def dfplot(df,colnames):  
+def dfplot(ticker, name, df,colnames):  
   figsize=(26,13)
   mc = mpf.make_marketcolors(
                             volume='lightgray'
@@ -18,15 +18,22 @@ def dfplot(df,colnames):
   apdict = []
   for colname in colnames:
       apdict.append(mpf.make_addplot(df[colname], secondary_y=False,panel=0))
-
+  def getTitle(ticker, name):
+    title="KalmanFilter-"+ticker
+    if name is not None:
+      title=title+"-" +name
+    return title
   fig1,ax1=mpf.plot(df,type='candle',volume=True,volume_panel=1,addplot=apdict, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False, title=ticker,panel_ratios=(3,1))
+  fig1.suptitle(getTitle(ticker,name),fontsize=30)
+  fig2,ax2=mpf.plot(df,type='candle',volume=False,volume_panel=1,addplot=apdict, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False, title=ticker)
+  fig2.suptitle(getTitle(ticker,name),fontsize=30)
 
 # Load stock data
 #data = pd.read_csv('./data/aapl_730d_1d.csv')
 
 drawchart=True
 historylen=512
-interval='1wk'
+interval='1d'
 daysprint=89
 usecache=True
 daystoplot=512
@@ -35,7 +42,7 @@ if len(sys.argv) <1:
   print("interval can be 1m, 5m, 15m, 30m, 1h, 1d, 1wk, 1mo, 3mo")
   print("python .\mingwave3.py QQQ 256 1d True 20 True 128 0l5")
 if len(sys.argv) <2:
-  ticker='QQQ'
+  ticker='SQQQ'
 if len(sys.argv) >=2:
   ticker=sys.argv[1]
 if len(sys.argv) >=3:
@@ -78,14 +85,16 @@ state_means, _ = kf.filter(data['Close'].values)
 # Apply RTS smoothing algorithm
 state_means_smooth, _ = kf.smooth(data['Close'].values)
 
+'''
 # Plot results
 plt.plot(data.index, data['Close'], label='Observed')
 plt.plot(data.index, state_means, label='Filtered')
 #plt.plot(data['date'], state_means_smooth, label='Smoothed')
 plt.plot(data.index, state_means_smooth, label='Smoothed')
 plt.legend()
+'''
 #plt.show()
 data['Filtered']=state_means
 data['Smoothed']=state_means_smooth
-dfplot(data, ['Filtered','Smoothed'])
+dfplot(ticker, None, data, ['Filtered','Smoothed'])
 plt.show()
