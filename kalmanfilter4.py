@@ -38,16 +38,23 @@ def dfplot(ticker, name, df,colnames1,colnames2):
   for colname in colnames2:
       apdict.append(mpf.make_addplot(df[colname], secondary_y=False,panel=0,width=1))
 
-  df['KFDiff']=df['Filtered']-df['Smoothed']
-  df['KFDiff_close']=df['Close']-df['Smoothed']
-  df['KFDiff_high']=df['High']-df['Smoothed']
-  df['KFDiff_low']=df['Low']-df['Smoothed']
-  msdr_model_results=DoMarkovRegression(df, 'KFDiff', 'KFDiff_close')
+  df['KFDiff_Filtered']=df['Filtered_close']-df['Smoothed_close']
+  df['KFDiff_close']=df['Close']-df['Smoothed_close']
+  df['KFDiff_high']=df['High']-df['Smoothed_close']
+  df['KFDiff_low']=df['Low']-df['Smoothed_close']
+
+  df['KFDiff_vol_filter']=df['Filtered_vol']-df['Smoothed_vol']
+  df['KFDiff_vol']=df['Volume']-df['Smoothed_vol']
+
+  msdr_model_results=DoMarkovRegression(df, 'KFDiff_Filtered', 'KFDiff_close')
+  
   (_max,_min)=getMaxMin(df)
   df['MarkovRegression00']=msdr_model_results.filtered_joint_probabilities[0][0]*(_max-_min) +_min
   df['MarkovRegression01']=msdr_model_results.filtered_joint_probabilities[0][1]*(_max-_min) +_min
   df['MarkovRegression10']=msdr_model_results.filtered_joint_probabilities[1][0]*(_max-_min) +_min
   df['MarkovRegression11']=msdr_model_results.filtered_joint_probabilities[1][1]*(_max-_min) +_min
+
+  
 
   apdict.append(mpf.make_addplot(df['MarkovRegression00'], secondary_y=False,panel=0,width=3))
   #apdict.append(mpf.make_addplot(df['MarkovRegression01'], secondary_y=False,panel=0,width=2))
@@ -63,9 +70,21 @@ def dfplot(ticker, name, df,colnames1,colnames2):
     return title
   apdict_vol=copy.deepcopy(apdict)
   apdict_vol.append(mpf.make_addplot(df['Smoothed_vol'], secondary_y=False,panel=1,width=1))
+  msdr_model_results_vol=DoMarkovRegression(df, 'KFDiff_vol_filter', 'KFDiff_vol')
+  (_max,_min)=(max(df['Volume'].values ),min(df['Volume'].values ))
+  df['MarkovRegression00_vol']=msdr_model_results_vol.filtered_joint_probabilities[0][0]*(_max-_min) +_min
+  df['MarkovRegression01_vol']=msdr_model_results_vol.filtered_joint_probabilities[0][1]*(_max-_min) +_min
+  df['MarkovRegression10_vol']=msdr_model_results_vol.filtered_joint_probabilities[1][0]*(_max-_min) +_min
+  df['MarkovRegression11_vol']=msdr_model_results_vol.filtered_joint_probabilities[1][1]*(_max-_min) +_min
+
+  apdict_vol.append(mpf.make_addplot(df['MarkovRegression00_vol'], secondary_y=False,panel=1,width=3))
+  #apdict.append(mpf.make_addplot(df['MarkovRegression01'], secondary_y=False,panel=0,width=2))
+  #apdict.append(mpf.make_addplot(df['MarkovRegression10'], secondary_y=False,panel=0,width=3))
+  apdict_vol.append(mpf.make_addplot(df['MarkovRegression11_vol'], secondary_y=False,panel=1,width=1))
+
   fig1,ax1=mpf.plot(df,type='candle',volume=True,volume_panel=1,addplot=apdict_vol, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False, title=ticker,panel_ratios=(3,1))
   fig1.suptitle(getTitle(ticker,name),fontsize=30)
-  apdict.append(mpf.make_addplot(df['KFDiff'], secondary_y=False,panel=1,width=3))
+  apdict.append(mpf.make_addplot(df['KFDiff_Filtered'], secondary_y=False,panel=1,width=3))
   apdict.append(mpf.make_addplot(df['KFDiff_close'], secondary_y=False,panel=1,width=1))
   apdict.append(mpf.make_addplot(df['KFDiff_high'], secondary_y=False,panel=1,width=1))
   apdict.append(mpf.make_addplot(df['KFDiff_low'], secondary_y=False,panel=1,width=1))
@@ -97,8 +116,8 @@ def KalmanFilterPlot(ticker, historylen, interval):
   state_means_smooth_low, _ = kf.smooth(data['Low'].values)
   state_means_smooth_vol, _ = kf.smooth(data['Volume'].values)
   #plt.show()
-  data['Filtered']=state_means
-  data['Smoothed']=state_means_smooth
+  data['Filtered_close']=state_means
+  data['Smoothed_close']=state_means_smooth
   data['Filtered_high']=state_means_high
   data['Smoothed_high']=state_means_smooth_high
   data['Filtered_low']=state_means_low
@@ -107,7 +126,7 @@ def KalmanFilterPlot(ticker, historylen, interval):
   data['Filtered_vol']=state_means_vol
   data['Smoothed_vol']=state_means_smooth_vol
 
-  dfplot(ticker, None, data, ['Smoothed','Smoothed_high','Smoothed_low'],['Filtered','Filtered_high','Filtered_low'])
+  dfplot(ticker, None, data, ['Smoothed_close','Smoothed_high','Smoothed_low'],['Filtered_close','Filtered_high','Filtered_low'])
   plt.show()
 
 # Load stock data
