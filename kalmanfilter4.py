@@ -8,6 +8,7 @@ import mplfinance as mpf
 from YahooData import *
 import sys
 import statsmodels.api as sm
+import copy
 def DoMarkovRegression(df, col1, col2):
   #build and train the MSDR model
   msdr_model = sm.tsa.MarkovRegression(endog=df[col1], k_regimes=2,
@@ -17,6 +18,11 @@ def DoMarkovRegression(df, col1, col2):
 #print model training summary
   print(msdr_model_results.summary())
   return msdr_model_results
+
+def getMaxMin(df):
+    _max=max(df['High'].values)
+    _min=min(df['Low'].values)
+    return (_max, _min)
 
 def dfplot(ticker, name, df,colnames1,colnames2):  
   figsize=(26,13)
@@ -36,6 +42,17 @@ def dfplot(ticker, name, df,colnames1,colnames2):
   df['KFDiff_close']=df['Close']-df['Smoothed']
   df['KFDiff_high']=df['High']-df['Smoothed']
   df['KFDiff_low']=df['Low']-df['Smoothed']
+  msdr_model_results=DoMarkovRegression(df, 'KFDiff', 'KFDiff_close')
+  (_max,_min)=getMaxMin(df)
+  df['MarkovRegression00']=msdr_model_results.filtered_joint_probabilities[0][0]*(_max-_min) +_min
+  df['MarkovRegression01']=msdr_model_results.filtered_joint_probabilities[0][1]*(_max-_min) +_min
+  df['MarkovRegression10']=msdr_model_results.filtered_joint_probabilities[1][0]*(_max-_min) +_min
+  df['MarkovRegression11']=msdr_model_results.filtered_joint_probabilities[1][1]*(_max-_min) +_min
+
+  apdict.append(mpf.make_addplot(df['MarkovRegression00'], secondary_y=False,panel=0,width=3))
+  #apdict.append(mpf.make_addplot(df['MarkovRegression01'], secondary_y=False,panel=0,width=2))
+  #apdict.append(mpf.make_addplot(df['MarkovRegression10'], secondary_y=False,panel=0,width=3))
+  apdict.append(mpf.make_addplot(df['MarkovRegression11'], secondary_y=False,panel=0,width=1))
   
   
 
@@ -44,23 +61,15 @@ def dfplot(ticker, name, df,colnames1,colnames2):
     if name is not None:
       title=title+"-" +name
     return title
-  fig1,ax1=mpf.plot(df,type='candle',volume=True,volume_panel=1,addplot=apdict, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False, title=ticker,panel_ratios=(3,1))
+  apdict_vol=copy.deepcopy(apdict)
+  apdict_vol.append(mpf.make_addplot(df['Smoothed_vol'], secondary_y=False,panel=1,width=1))
+  fig1,ax1=mpf.plot(df,type='candle',volume=True,volume_panel=1,addplot=apdict_vol, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False, title=ticker,panel_ratios=(3,1))
   fig1.suptitle(getTitle(ticker,name),fontsize=30)
   apdict.append(mpf.make_addplot(df['KFDiff'], secondary_y=False,panel=1,width=3))
   apdict.append(mpf.make_addplot(df['KFDiff_close'], secondary_y=False,panel=1,width=1))
   apdict.append(mpf.make_addplot(df['KFDiff_high'], secondary_y=False,panel=1,width=1))
   apdict.append(mpf.make_addplot(df['KFDiff_low'], secondary_y=False,panel=1,width=1))
-
-  msdr_model_results=DoMarkovRegression(df, 'KFDiff', 'KFDiff_close')
-  df['MarkovRegression00']=msdr_model_results.filtered_joint_probabilities[0][0]
-  df['MarkovRegression01']=msdr_model_results.filtered_joint_probabilities[0][1]
-  df['MarkovRegression10']=msdr_model_results.filtered_joint_probabilities[1][0]
-  df['MarkovRegression11']=msdr_model_results.filtered_joint_probabilities[1][1]
-
-  apdict.append(mpf.make_addplot(df['MarkovRegression00'], secondary_y=False,panel=2,width=3))
-  #apdict.append(mpf.make_addplot(df['MarkovRegression01'], secondary_y=False,panel=2,width=2))
-  #apdict.append(mpf.make_addplot(df['MarkovRegression10'], secondary_y=False,panel=2,width=3))
-  apdict.append(mpf.make_addplot(df['MarkovRegression11'], secondary_y=False,panel=2,width=1))
+  
   
 
   fig2,ax2=mpf.plot(df,type='candle',volume=False,volume_panel=1,addplot=apdict, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False, title=ticker)
@@ -81,11 +90,12 @@ def KalmanFilterPlot(ticker, historylen, interval):
   state_means, _ = kf.filter(data['Close'].values)
   state_means_high, _ = kf.filter(data['High'].values)
   state_means_low, _ = kf.filter(data['Low'].values)
+  state_means_vol, _ = kf.filter(data['Volume'].values)
   # Apply RTS smoothing algorithm
   state_means_smooth, _ = kf.smooth(data['Close'].values)
   state_means_smooth_high, _ = kf.smooth(data['High'].values)
   state_means_smooth_low, _ = kf.smooth(data['Low'].values)
-  
+  state_means_smooth_vol, _ = kf.smooth(data['Volume'].values)
   #plt.show()
   data['Filtered']=state_means
   data['Smoothed']=state_means_smooth
@@ -93,6 +103,9 @@ def KalmanFilterPlot(ticker, historylen, interval):
   data['Smoothed_high']=state_means_smooth_high
   data['Filtered_low']=state_means_low
   data['Smoothed_low']=state_means_smooth_low
+
+  data['Filtered_vol']=state_means_vol
+  data['Smoothed_vol']=state_means_smooth_vol
 
   dfplot(ticker, None, data, ['Smoothed','Smoothed_high','Smoothed_low'],['Filtered','Filtered_high','Filtered_low'])
   plt.show()
