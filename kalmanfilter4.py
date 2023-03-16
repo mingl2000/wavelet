@@ -7,6 +7,17 @@ import matplotlib.pyplot as plt
 import mplfinance as mpf
 from YahooData import *
 import sys
+import statsmodels.api as sm
+def DoMarkovRegression(df, col1, col2):
+  #build and train the MSDR model
+  msdr_model = sm.tsa.MarkovRegression(endog=df[col1], k_regimes=2,
+  trend='c', exog=df[col2], switching_variance=True)
+  msdr_model_results = msdr_model.fit(iter=1000)
+
+#print model training summary
+  print(msdr_model_results.summary())
+  return msdr_model_results
+
 def dfplot(ticker, name, df,colnames1,colnames2):  
   figsize=(26,13)
   mc = mpf.make_marketcolors(
@@ -29,7 +40,7 @@ def dfplot(ticker, name, df,colnames1,colnames2):
   
 
   def getTitle(ticker, name):
-    title="KalmanFilter-"+ticker
+    title="KalmanFilter&MarkovRegression-"+ticker
     if name is not None:
       title=title+"-" +name
     return title
@@ -39,6 +50,19 @@ def dfplot(ticker, name, df,colnames1,colnames2):
   apdict.append(mpf.make_addplot(df['KFDiff_close'], secondary_y=False,panel=1,width=1))
   apdict.append(mpf.make_addplot(df['KFDiff_high'], secondary_y=False,panel=1,width=1))
   apdict.append(mpf.make_addplot(df['KFDiff_low'], secondary_y=False,panel=1,width=1))
+
+  msdr_model_results=DoMarkovRegression(df, 'KFDiff', 'KFDiff_close')
+  df['MarkovRegression00']=msdr_model_results.filtered_joint_probabilities[0][0]
+  df['MarkovRegression01']=msdr_model_results.filtered_joint_probabilities[0][1]
+  df['MarkovRegression10']=msdr_model_results.filtered_joint_probabilities[1][0]
+  df['MarkovRegression11']=msdr_model_results.filtered_joint_probabilities[1][1]
+
+  apdict.append(mpf.make_addplot(df['MarkovRegression00'], secondary_y=False,panel=2,width=3))
+  #apdict.append(mpf.make_addplot(df['MarkovRegression01'], secondary_y=False,panel=2,width=2))
+  #apdict.append(mpf.make_addplot(df['MarkovRegression10'], secondary_y=False,panel=2,width=3))
+  apdict.append(mpf.make_addplot(df['MarkovRegression11'], secondary_y=False,panel=2,width=1))
+  
+
   fig2,ax2=mpf.plot(df,type='candle',volume=False,volume_panel=1,addplot=apdict, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False, title=ticker)
   
   fig2.suptitle(getTitle(ticker,name),fontsize=30)
