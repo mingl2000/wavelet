@@ -58,7 +58,8 @@ def doKalmarFilerSearch(symbols):
             'closemax':[],
             'closeslope':[],
             'aboveclosemin':[],
-            'belowclosemax':[]
+            'belowclosemax':[],
+            'kfVolslope':[],
             }
     kf_df=pd.DataFrame(kf_columns)
     kf_df.set_index('ticker')
@@ -66,6 +67,7 @@ def doKalmarFilerSearch(symbols):
     for symbol in symbols.split(','):
         df=GetYahooData_v2(symbol, bars=500, interval='1d')
         (kf_means, kf_min, kf_max)=DoKalmanFilter(df['Close'].to_numpy())
+        (kfv_means, kfv_min, kfv_max)=DoKalmanFilter(df['Volume'].to_numpy())
         kf_df.loc[symbol] = [symbol,
                             df['Close'][-1],
                             df['High'][-1],
@@ -82,7 +84,8 @@ def doKalmarFilerSearch(symbols):
                             None,
                             df['Close'][-1]/df['Close'][-2]*100-100,
                             None,
-                            None
+                            None,
+                            kfv_means[-1][0]/kfv_means[-2][0]*100-100,
                             ]
     return kf_df
 
