@@ -21,6 +21,17 @@ def DoMarkovRegression(df, col1, col2):
   msdr_model_results = msdr_model.fit(iter=1000)
   return msdr_model_results
 
+def DoKalmanFilter2(arr):
+    kf = KalmanFilter(
+      initial_state_mean=arr[0],
+      initial_state_covariance=1,
+      observation_covariance=1,
+      transition_covariance=0.01
+    )
+    state_means, _ = kf.filter(arr)
+    state_means_smooth, _ = kf.smooth(arr)
+    return (state_means, state_means_smooth)
+
 def DoKalmanFilter(data):
     kf = KalmanFilter(
       initial_state_mean=df['Close'][0],
@@ -85,7 +96,9 @@ class TestStrategy(bt.Strategy):
         self.barIdx=0
         #self.df= GetYahooData_v2('^GSPC',730,'1d')
         #currentdf=self.df[0:self.barIdx]
-        (self.KF, self.KFSmooth)=DoKalmanFilter(self.datas[0])
+        #(self.KF, self.KFSmooth)=DoKalmanFilter(self.datas[0])
+        self.last_kf_min=10000000
+        self.last_kf_max=0
 
     def notify_order(self, order):
         if order.status in [order.Submitted, order.Accepted]:
@@ -133,8 +146,28 @@ class TestStrategy(bt.Strategy):
         if self.order:
             return
         #if self.barIdx>=self.params.slowPeriod and self.barIdx< len(self.df):
-        #if self.barIdx< len(self.df):
-        if 1==1:
+        #if self.barIdx< len(self.datas[0].close)-1 and self.barIdx>1:
+        print ('self.barIdx=',self.barIdx)
+        if self.barIdx>1 and self.barIdx < len(self.datas[0].close.array):
+            (kf, kf_smooth)=DoKalmanFilter2(self.datas[0].close.array[:self.barIdx+1])
+            (kfv, kfv_smooth)=DoKalmanFilter2(self.datas[0].volume.array[:self.barIdx+1])
+            if kf[-1][0]<self.last_kf_min and kf[-1][0]>kf[-2][0]:
+                self.last_kf_min=kf[-1][0]
+            if kf[-1][0]>self.last_kf_max:
+                self.last_kf_max=kf[-1][0]
+
+            #closeReverse=copy.deepcopy(self.datas[0].close.array[:self.barIdx+1])
+            #closeReverse.reverse()
+            #(kf2, kf_smooth2)=DoKalmanFilter2(closeReverse)
+            
+            #kf_smooth=np.flip(kf_smooth2)
+            '''
+            newclose=[]
+            for i in range(len(kf)):
+                newclose.append(kf[i][0])
+            (kf_smooth, _)=DoKalmanFilter2(newclose)
+            '''
+        #if 1==1:
             #currentdf=self.df[0:self.barIdx]
             #currentdf=MarkovRegressionOverKalmanFilter(currentdf)
             #currentdf=self.df[0:self.barIdx]
@@ -152,7 +185,13 @@ class TestStrategy(bt.Strategy):
                 #if self.df['MarkovRegression00'][self.barIdx-1]> self.df['MarkovRegression11'][self.barIdx-1] and self.df['Smoothed_close'][self.barIdx-1]>self.df['Smoothed_close'][self.barIdx-2]:
                 #if self.df['MarkovRegression00'][self.barIdx-1]> 0.8 and self.df['Smoothed_close'][self.barIdx-1]>self.df['Smoothed_close'][self.barIdx-2]:
                 #if self.df['Smoothed_close'][self.barIdx-1]>self.df['Filtered_close'][self.barIdx-1]:
-                if self.KF[self.barIdx-1]<self.KFSmooth[self.barIdx-1]:
+                #if self.KF[self.barIdx-1]<self.KFSmooth[self.barIdx-1]:
+                #if self.KF[self.barIdx-1][0]>self.datas[0].close[self.barIdx-1]:
+                #if kf[self.barIdx-1][0] >self.datas[0].close.array[self.barIdx-1]:
+                #if kf[self.barIdx][0] >kf[self.barIdx-1][0] and kf[self.barIdx-1][0] <=kf[self.barIdx-2][0]:
+                #if kf_smooth[-1][0] >self.datas[0].close.array[self.barIdx]:
+                #if kf[-1][0] >self.datas[0].close.array[self.barIdx] and kfv[-1][0] >self.datas[0].volume.array[self.barIdx]: 19.89% QQQ
+                if kf[-1][0] >self.last_kf_min*1.01  and kf[-1][0]>kf[-2][0]: #26.57% QQQ   88.05% 300750.sz
                     # BUY, BUY, BUY!!! (with all possible default parameters)
                     self.log('BUY CREATE, %.2f' % self.dataclose[0])
 
@@ -166,12 +205,18 @@ class TestStrategy(bt.Strategy):
                 #if self.df['MarkovRegression00'][self.barIdx-1]< self.df['MarkovRegression11'][self.barIdx-1] or self.df['Smoothed_close'][self.barIdx-1]<self.df['Smoothed_close'][self.barIdx-2]:
                 #if self.df['MarkovRegression00'][self.barIdx-1]< 0.2 :
                 #if self.df['Smoothed_close'][self.barIdx-1]<self.df['Filtered_close'][self.barIdx-1]:
-                if self.KF[self.barIdx-1]>self.KFSmooth[self.barIdx-1]:
+                #if self.KF[self.barIdx-1]>self.KFSmooth[self.barIdx-1]:
+                #if kf[self.barIdx-1][0] <self.datas[0].close.array[self.barIdx-1]:
+                #if kf[self.barIdx][0] <kf[self.barIdx-1][0] and kf[self.barIdx-1][0] >=kf[self.barIdx-2][0]:    
+                #if kf_smooth[-1][0] <self.datas[0].close.array[self.barIdx]:
+               #if kf[-1][0] <self.datas[0].close.array[self.barIdx]: 19.89% QQQ
+                if kf[-1][0] <self.last_kf_max/1.01 and kf[-1][0]<kf[-2][0]:   #26.57% QQQ | 88.05% 300750.sz | 9.27% 002030.sz | 32.84% 002049.sz
                     # SELL, SELL, SELL!!! (with all possible default parameters)
                     self.log('SELL CREATE, %.2f' % self.dataclose[0])
 
                     # Keep track of the created order to avoid a 2nd order
                     self.order = self.sell()
+                    self.last_kf_min=kf[-1][0]
         self.barIdx=self.barIdx+1
 
 import sys
