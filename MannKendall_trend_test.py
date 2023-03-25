@@ -21,13 +21,11 @@ def plot(ticker, df, segments):
     #vlines.append(df.index[end])
     #alines.append((df.index[start],df['Close'][start]))
     #alines.append((df.index[start],df['Close'][end]))
-    tlines.append((df.index[start],df.index[end]))
+    #tlines.append(dict(tlines=(df.index[start],df.index[end]),colors='b'))
     if slope>0:
-       colors.append('g')
-       colors.append('g')
+       tlines.append(dict(tlines=[(df.index[start],df.index[end])],colors='b'))
     else:
-       colors.append('r')
-       colors.append('r')
+       tlines.append(dict(tlines=[(df.index[start],df.index[end])],colors='r'))
        
   #apdict.append(mpf.make_addplot(df[newcol], secondary_y=False))
   #fig1,ax1=mpf.plot(df,type='candle',volume=False,volume_panel=2,addplot=apdict, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False, title=ticker,panel_ratios=(1,2))
