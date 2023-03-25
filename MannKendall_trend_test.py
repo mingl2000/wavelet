@@ -12,9 +12,14 @@ def plot(ticker, df, segments):
                             
   s  = mpf.make_mpf_style(marketcolors=mc, gridaxis='both')
   apdict = []
+  vlines=[]
+  for (start,end, trend) in segments:
+    vlines.append(df.index[start])
+    vlines.append(df.index[end])
   #apdict.append(mpf.make_addplot(df[newcol], secondary_y=False))
   #fig1,ax1=mpf.plot(df,type='candle',volume=False,volume_panel=2,addplot=apdict, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False, title=ticker,panel_ratios=(1,2))
-  fig1,ax1=mpf.plot(df,type='candle',volume=False,volume_panel=2,addplot=apdict, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False, title=ticker)
+  fig1,ax1=mpf.plot(df,type='candle',volume=False,volume_panel=2,vlines=vlines, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False, title=ticker)
+  #mpf.plot(df,vlines=vlines)
   plt.show()
 '''
 gfg_data = [54, 52, 53, 59, 56, 57, 51, 52, 50, 53]
@@ -41,7 +46,7 @@ from scipy.stats import kendalltau
 import numpy as np
 from scipy.stats import linregress
 
-def trend_segmentation2(time_series, w, m, alpha):
+def trend_segmentation(time_series, w, m, alpha):
     segments = []
     i = 0
     while i+w <= len(time_series):
@@ -64,33 +69,6 @@ def trend_segmentation2(time_series, w, m, alpha):
     return merged_segments
 
 
-def trend_segmentation(time_series, sub_series_length, alpha):
-    num_segments = len(time_series) // sub_series_length
-    trends = np.zeros(num_segments)
-    p_values = np.zeros(num_segments)
-    for i in range(num_segments):
-        start_index = i * sub_series_length
-        end_index = (i + 1) * sub_series_length
-        sub_series = time_series[start_index:end_index]
-        tau, p_value = kendalltau(range(len(sub_series)), sub_series)
-        if p_value < alpha:
-            trends[i] = np.sign(tau)
-            p_values[i] = p_value
-    segments = []
-    current_segment = [0, 0]
-    for i in range(num_segments):
-        if trends[i] != 0:
-            if current_segment[0] == 0:
-                current_segment[0] = i
-                current_segment[1] = i + 1
-            elif trends[i] == trends[current_segment[1] - 1]:
-                current_segment[1] = i + 1
-            else:
-                segments.append(current_segment)
-                current_segment = [i, i + 1]
-        if current_segment[0] != 0:
-          segments.append(current_segment)
-    return segments
 
 def MannKendallTrendTest(arr, testmode=None):
   if testmode is not None:
@@ -189,11 +167,11 @@ print(mkresult)
 data_with_trend_segment=[1,2,3,4,5,6,7,8,9,8,7,6,3,2,1,2,3,4,5,7,8,9]
 #rs_result=trend_segmentation(data_with_trend_segment, 9,0.05)
 #print("\ntrend_segmentation:", rs_result)
-rs_result=trend_segmentation2(data_with_trend_segment, 3,3,0.05)
+rs_result=trend_segmentation(data_with_trend_segment, 3,3,0.05)
 print("\ntrend_segmentation:", rs_result)
 
 data=df["Close"].to_numpy()
-segments=trend_segmentation2(data, 3,3,0.05)
+segments=trend_segmentation(data, 3,3,0.05)
 plot(ticker,df,segments)
 print("\ntrend_segmentation:", segments)
 
