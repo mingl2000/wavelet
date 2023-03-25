@@ -11,14 +11,27 @@ def plot(ticker, df, segments):
 
                             
   s  = mpf.make_mpf_style(marketcolors=mc, gridaxis='both')
-  apdict = []
-  vlines=[]
-  for (start,end, trend) in segments:
-    vlines.append(df.index[start])
-    vlines.append(df.index[end])
+  #apdict = []
+  #vlines=[]
+  colors=[]
+  #alines=[]
+  tlines=[]
+  for (start,end, slope) in segments:
+    #vlines.append(df.index[start])
+    #vlines.append(df.index[end])
+    #alines.append((df.index[start],df['Close'][start]))
+    #alines.append((df.index[start],df['Close'][end]))
+    tlines.append((df.index[start],df.index[end]))
+    if slope>0:
+       colors.append('g')
+       colors.append('g')
+    else:
+       colors.append('r')
+       colors.append('r')
+       
   #apdict.append(mpf.make_addplot(df[newcol], secondary_y=False))
   #fig1,ax1=mpf.plot(df,type='candle',volume=False,volume_panel=2,addplot=apdict, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False, title=ticker,panel_ratios=(1,2))
-  fig1,ax1=mpf.plot(df,type='candle',volume=False,volume_panel=2,vlines=vlines, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False, title=ticker)
+  fig1,ax1=mpf.plot(df,type='candle',volume=False,volume_panel=2,tlines=tlines, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False, title=ticker)
   #mpf.plot(df,vlines=vlines)
   plt.show()
 '''
@@ -45,7 +58,15 @@ import numpy as np
 from scipy.stats import kendalltau
 import numpy as np
 from scipy.stats import linregress
-
+'''
+In this example, 
+  the time_series parameter is the original time series data, 
+  w is the window size, 
+  m is the minimum number of data points required for a segment, 
+  and alpha is the significance level for the linear regression test. 
+  The output of this function is a list of segments, 
+  where each segment is represented by a tuple containing the start index, end index, and slope value.
+'''
 def trend_segmentation(time_series, w, m, alpha):
     segments = []
     i = 0
@@ -171,7 +192,7 @@ rs_result=trend_segmentation(data_with_trend_segment, 3,3,0.05)
 print("\ntrend_segmentation:", rs_result)
 
 data=df["Close"].to_numpy()
-segments=trend_segmentation(data, 3,3,0.05)
+segments=trend_segmentation(data, 13,13,0.05)
 plot(ticker,df,segments)
 print("\ntrend_segmentation:", segments)
 
