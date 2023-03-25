@@ -6,21 +6,61 @@ gfg_data = [54, 52, 53, 59, 56, 57, 51, 52, 50, 53]
 result=mk.original_test(gfg_data)
 print(result)
 '''
-def MannKendallTrendTest(arr):
+def MannKendallTrendTest_multivariate(arr, testmode):
+  if testmode is not None:
+    testmode=testmode.lower()
+  start=0
   lastmkresult=None
   for i in range(2,len(arr)):
       data=arr[-1-i:]
-      mkresult=mk.original_test(data)
-      if mkresult.h:
-          print (i,len(data), mkresult.trend)
-          if lastmkresult is None:
-              lastmkresult=mkresult
-          if lastmkresult is not None and  mkresult.trend!=lastmkresult.trend:
-              print ('trend change point:', df.index[-i])
-              return i-1, lastmkresult
-              break
-      elif not mkresult.h and lastmkresult is not None:
-        return i-1, lastmkresult
+      if testmode is None or testmode=="original_test":
+        mkresult=mk.original_test(data)
+      elif testmode=="hamed_rao_modification_test":
+        mkresult=mk.hamed_rao_modification_test(data)
+      elif testmode=="yue_wang_modification_test":
+        mkresult=mk.yue_wang_modification_test(data)
+      elif testmode=="pre_whitening_modification_test":
+        mkresult=mk.pre_whitening_modification_test(data)
+      elif testmode=="trend_free_pre_whitening_modification_test":
+        mkresult=mk.trend_free_pre_whitening_modification_test(data)
+      elif testmode=="trend_free_pre_whitening_modification_test":
+        mkresult=mk.trend_free_pre_whitening_modification_test(data)
+      
+      if not mkresult.h and lastmkresult is None:
+         start=i
+      else:
+        if mkresult.h  and (lastmkresult is None or mkresult.trend==lastmkresult.trend):
+          lastmkresult=mkresult
+          end=i
+        else:
+          return start, end, lastmkresult
+
+def MannKendallTrendTest(arr, testmode=None):
+  if testmode is not None:
+    testmode=testmode.lower()
+  start=0
+  lastmkresult=None
+  for i in range(2,len(arr)):
+      data=arr[-1-i:]
+      if testmode is None or testmode=="original_test":
+        mkresult=mk.original_test(data)
+      elif testmode=="hamed_rao_modification_test":
+        mkresult=mk.hamed_rao_modification_test(data)
+      elif testmode=="yue_wang_modification_test":
+        mkresult=mk.yue_wang_modification_test(data)
+      elif testmode=="pre_whitening_modification_test":
+        mkresult=mk.pre_whitening_modification_test(data)
+      elif testmode=="trend_free_pre_whitening_modification_test":
+        mkresult=mk.trend_free_pre_whitening_modification_test(data)
+      
+      if not mkresult.h and lastmkresult is None:
+         start=i
+      else:
+        if mkresult.h  and (lastmkresult is None or mkresult.trend==lastmkresult.trend):
+          lastmkresult=mkresult
+          end=i
+        else:
+          return start, end, lastmkresult
 
 
 drawchart=True
@@ -55,5 +95,8 @@ if len(sys.argv) >=9:
 
 #ticker="SPX"
 df= GetYahooData_v2(ticker,historylen,interval)
-maxlen, mkresult=MannKendallTrendTest(df["Close"].to_numpy())
-print(maxlen, mkresult.trend, mkresult)
+for mode in [None,'hamed_rao_modification_test','yue_wang_modification_test','pre_whitening_modification_test','trend_free_pre_whitening_modification_test']:
+  begin, end, mkresult=MannKendallTrendTest(df["Close"].to_numpy(), mode)
+  print(mode,begin, end, mkresult.trend, mkresult)
+  print()
+
