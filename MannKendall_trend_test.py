@@ -6,6 +6,23 @@ gfg_data = [54, 52, 53, 59, 56, 57, 51, 52, 50, 53]
 result=mk.original_test(gfg_data)
 print(result)
 '''
+def MannKendallTrendTest(arr):
+  lastmkresult=None
+  for i in range(2,len(arr)):
+      data=arr[-1-i:]
+      mkresult=mk.original_test(data)
+      if mkresult.h:
+          print (i,len(data), mkresult.trend)
+          if lastmkresult is None:
+              lastmkresult=mkresult
+          if lastmkresult is not None and  mkresult.trend!=lastmkresult.trend:
+              print ('trend change point:', df.index[-i])
+              return i-1, lastmkresult
+              break
+      elif not mkresult.h and lastmkresult is not None:
+        return i-1, lastmkresult
+
+
 drawchart=True
 historylen=512
 interval='1d'
@@ -38,17 +55,5 @@ if len(sys.argv) >=9:
 
 #ticker="SPX"
 df= GetYahooData_v2(ticker,historylen,interval)
-x= df["Close"].to_numpy() 
-trend=None
-for i in range(2,historylen):
-    data=x[-1-i:]
-    
-    result=mk.original_test(data)
-    if result.h:
-        print (i,len(data), result.trend)
-        if trend is None:
-            trend=result.trend
-            print('last trend=',trend)
-        if trend is not None and  result.trend!=trend:
-            print ('trend change point:', df.index[-i])
-            break
+maxlen, mkresult=MannKendallTrendTest(df["Close"].to_numpy())
+print(maxlen, mkresult.trend, mkresult)
