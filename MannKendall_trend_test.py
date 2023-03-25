@@ -1,6 +1,21 @@
 import pymannkendall as mk
 from YahooData import *
 import sys
+import mplfinance as mpf
+import matplotlib.pyplot as plt
+def plot(ticker, df, segments):
+  figsize=(26,13)
+  mc = mpf.make_marketcolors(
+                            volume='lightgray'
+                            )
+
+                            
+  s  = mpf.make_mpf_style(marketcolors=mc, gridaxis='both')
+  apdict = []
+  #apdict.append(mpf.make_addplot(df[newcol], secondary_y=False))
+  #fig1,ax1=mpf.plot(df,type='candle',volume=False,volume_panel=2,addplot=apdict, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False, title=ticker,panel_ratios=(1,2))
+  fig1,ax1=mpf.plot(df,type='candle',volume=False,volume_panel=2,addplot=apdict, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False, title=ticker)
+  plt.show()
 '''
 gfg_data = [54, 52, 53, 59, 56, 57, 51, 52, 50, 53]
 result=mk.original_test(gfg_data)
@@ -20,6 +35,62 @@ def MannKendallTrendTest_multivariate(arr):
           end=i
         else:
           return start, end, lastmkresult
+
+import numpy as np
+from scipy.stats import kendalltau
+import numpy as np
+from scipy.stats import linregress
+
+def trend_segmentation2(time_series, w, m, alpha):
+    segments = []
+    i = 0
+    while i+w <= len(time_series):
+        segment = time_series[i:i+w]
+        slope, intercept, r_value, p_value, std_err = linregress(range(len(segment)), segment)
+        if p_value < alpha and len(segment) >= m:
+            segments.append((i, i+w-1, slope))
+            i += w-m+1
+        else:
+            i += 1
+    merged_segments = []
+    current_segment = segments[0]
+    for i in range(1, len(segments)):
+        if np.sign(current_segment[2]) == np.sign(segments[i][2]):
+            current_segment = (current_segment[0], segments[i][1], current_segment[2]+segments[i][2])
+        else:
+            merged_segments.append(current_segment)
+            current_segment = segments[i]
+    merged_segments.append(current_segment)
+    return merged_segments
+
+
+def trend_segmentation(time_series, sub_series_length, alpha):
+    num_segments = len(time_series) // sub_series_length
+    trends = np.zeros(num_segments)
+    p_values = np.zeros(num_segments)
+    for i in range(num_segments):
+        start_index = i * sub_series_length
+        end_index = (i + 1) * sub_series_length
+        sub_series = time_series[start_index:end_index]
+        tau, p_value = kendalltau(range(len(sub_series)), sub_series)
+        if p_value < alpha:
+            trends[i] = np.sign(tau)
+            p_values[i] = p_value
+    segments = []
+    current_segment = [0, 0]
+    for i in range(num_segments):
+        if trends[i] != 0:
+            if current_segment[0] == 0:
+                current_segment[0] = i
+                current_segment[1] = i + 1
+            elif trends[i] == trends[current_segment[1] - 1]:
+                current_segment[1] = i + 1
+            else:
+                segments.append(current_segment)
+                current_segment = [i, i + 1]
+        if current_segment[0] != 0:
+          segments.append(current_segment)
+    return segments
 
 def MannKendallTrendTest(arr, testmode=None):
   if testmode is not None:
@@ -115,3 +186,14 @@ print(mkresult)
 print ('\n3d data')
 mkresult=mk.correlated_multivariate_test(mv_data)
 print(mkresult)
+data_with_trend_segment=[1,2,3,4,5,6,7,8,9,8,7,6,3,2,1,2,3,4,5,7,8,9]
+#rs_result=trend_segmentation(data_with_trend_segment, 9,0.05)
+#print("\ntrend_segmentation:", rs_result)
+rs_result=trend_segmentation2(data_with_trend_segment, 3,3,0.05)
+print("\ntrend_segmentation:", rs_result)
+
+data=df["Close"].to_numpy()
+segments=trend_segmentation2(data, 3,3,0.05)
+plot(ticker,df,segments)
+print("\ntrend_segmentation:", segments)
+
