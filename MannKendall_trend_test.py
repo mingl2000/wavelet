@@ -122,6 +122,8 @@ historylen=512
 interval='1d'
 usecache=True
 daystoplot=512
+segwindow=13
+segminDataPoints=13
 if len(sys.argv) <1:
   print("arguments are : Symbol historylen interval drawchart daysprint brick_size_in_ATR")
   print("interval can be 1m, 5m, 15m, 30m, 1h, 1d, 1wk, 1mo, 3mo")
@@ -135,16 +137,9 @@ if len(sys.argv) >=3:
 if len(sys.argv) >=4:
   interval=sys.argv[3]
 if len(sys.argv) >=5:
-  drawchart=sys.argv[4].lower()=='true'
+  segwindow=int(sys.argv[4])
 if len(sys.argv) >=6:
-  daysprint=int(sys.argv[5])
-if len(sys.argv) >=7:
-  usecache=sys.argv[6].lower()=='true'
-if len(sys.argv) >=8:
-  daystoplot=int(sys.argv[7])
-if len(sys.argv) >=9:
-  brick_size=float(sys.argv[8])
-  #exit()
+  segminDataPoints=int(sys.argv[5])
 
 
 #ticker="SPX"
@@ -154,6 +149,7 @@ for mode in [None,'hamed_rao_modification_test','yue_wang_modification_test','pr
   begin, end, mkresult=MannKendallTrendTest(df["Close"].to_numpy(), mode)
   print(mode,begin, end, mkresult.trend, mkresult)
   print()
+'''
 '''
 mv_data = np.array([[1,1,1],[2,2,2],[3,3,3],[4,4,4],[5,5,5],[6,6,6],[7,7,7],[8,8,8],[9,9,9]])
 def arbitrary_2d_data():
@@ -177,6 +173,7 @@ def arbitrary_2d_data():
     return arbitrary_2d_data
 
 #result=MannKendallTrendTest_multivariate(arbitrary_2d_data())
+
 print ('2d data')
 mkresult=mk.correlated_multivariate_test(arbitrary_2d_data())
 print(mkresult)
@@ -188,9 +185,9 @@ data_with_trend_segment=[1,2,3,4,5,6,7,8,9,8,7,6,3,2,1,2,3,4,5,7,8,9]
 #print("\ntrend_segmentation:", rs_result)
 rs_result=trend_segmentation(data_with_trend_segment, 3,3,0.05)
 print("\ntrend_segmentation:", rs_result)
-
+'''
 data=df["Close"].to_numpy()
-segments=trend_segmentation(data, 13,13,0.05)
+segments=trend_segmentation(data, segwindow,segminDataPoints,0.05)
 plot(ticker,df,segments)
 print("\ntrend_segmentation:", segments)
 
