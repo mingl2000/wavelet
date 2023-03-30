@@ -29,6 +29,18 @@ import yfinance as yf
 
 from os.path import exists
 import yfinance as yf
+def getStockNames():
+  df=pd.read_excel('CHINA_STOCKs2.xlsx', index_col=0)
+  return df
+
+def getStockName(stock_df, symbol):
+  try:
+    row=stock_df.loc[symbol[0:6]]
+    name=row['名称']
+    sector=row['细分行业']
+    return (name,sector)
+  except:
+    return (symbol, 'NA')
 def GetYahooData(symbol, bars=500, interval='1d'):
   #start=datetime.date.today()-datetime.timedelta(days=days)
   #end=datetime.date.today()
@@ -93,15 +105,21 @@ if len(sys.argv) >=2:
 
 #data = quandl.get('WIKI/%s' % instrument, start_date='2017-01-01', end_date='2012-02-10')
 ssa_columns={'ticker':[], 
-            'Close':[], 
-            'Low':[],
-            'High':[], 
+             'name':[], 
+             'sector':[], 
+             
             'X_ssa_0':[], 'X_ssa_0_dir':[], 'X_ssa_0_slope':[], 'X_ssa_0_slope_percent':[], 'X_ssa_0_acceleration':[],
             'X_ssa_1':[], 'X_ssa_1_dir':[], 'X_ssa_1_slope':[], 
             'V_ssa_0':[], 'V_ssa_0_dir':[], 'V_ssa_0_slope':[], 'V_ssa_0_slope_percent':[],'V_ssa_0_acceleration':[], 
-            'V_ssa_1':[], 'V_ssa_1_dir':[], 'V_ssa_1_slope':[]}
+            'V_ssa_1':[], 'V_ssa_1_dir':[], 'V_ssa_1_slope':[],
+            'Close':[], 
+            'Low':[],
+            'High':[], 
+            }
 ssa_df=pd.DataFrame(ssa_columns)
 ssa_df.set_index('ticker')
+
+stock_df=getStockNames()
 for symbol in symbols.split(','):
   df=GetYahooData(symbol, bars=500, interval='1d')
   if df is not None:
@@ -154,15 +172,19 @@ for symbol in symbols.split(','):
 
       print(fmt.format(symbol, X_ssa[0][-1],upordown(X_ssa[0]),slope(X_ssa[0]),acceration(X_ssa[0]), X_ssa[1][-1],upordown(X_ssa[1]), slope(X_ssa[1]), V_ssa[0][-1],upordown(V_ssa[0]),slope(V_ssa[0]), acceration(V_ssa[0]),V_ssa[1][-1],upordown(V_ssa[1]),slope(V_ssa[1]) ))
       pass
-    def add_ssa_df(symbol,df,X_ssa, V_ssa,ssa_df):   
+    def add_ssa_df(symbol,df,X_ssa, V_ssa,ssa_df):
+      (name, sector)=getStockName(stock_df,symbol)
       ssa_df.loc[symbol] = [symbol,
-                            df['Close'][-1],
-                            df['High'][-1],
-                            df['Low'][-1],
+                            name,
+                            sector,
                             X_ssa[0][-1],upordown(X_ssa[0]),slope(X_ssa[0]),slope(X_ssa[0])/X_ssa[0][-1]*100,acceration(X_ssa[0]),
                             X_ssa[1][-1],upordown(X_ssa[1]), slope(X_ssa[1]),
                             V_ssa[0][-1],upordown(V_ssa[0]),slope(V_ssa[0]),slope(V_ssa[0])/V_ssa[0][-1]*100, acceration(V_ssa[0]),
-                            V_ssa[1][-1],upordown(V_ssa[1]),slope(V_ssa[1])]
+                            V_ssa[1][-1],upordown(V_ssa[1]),slope(V_ssa[1]),
+                            df['Close'][-1],
+                            df['High'][-1],
+                            df['Low'][-1],
+]
       return ssa_df
       #fmt="{0:18}{1:8.2f} * {2:8.2f} {3:4} {4:8.2f} {5:4} * {6:8.2f} {7:4} {8:8.2f} {9:4} * {10:8.2f} {11:4} {12:8.2f} {13:4} * {14:18,.0f} {15:4} {16:18,.0f} {17:4} {18:18,.2f} {19:18,.2f}"
       #print(fmt.format(df.index[-i-1].strftime("%m/%d/%Y %H:%M"), df['Close'][-i-1], wf_close[0][-i-1],closedir,wf_close[1][-i-1],close1dir,wf_high[0][-i-1],highdir,wf_high[1][-i-1],high1dir,wf_low[0][-i-1],lowdir,wf_low[1][-i-1],low1dir,wf_vol[0][-i-1],voldir,wf_vol[1][-i-1],vol1dir, gf3[i], gf5[i]))
