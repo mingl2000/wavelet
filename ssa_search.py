@@ -30,6 +30,8 @@ import yfinance as yf
 from os.path import exists
 import yfinance as yf
 import talib
+import warnings
+warnings.filterwarnings('ignore')
 def getStockNames():
   df=pd.read_excel('CHINA_STOCKs2.xlsx', index_col=0)
   return df
@@ -201,7 +203,7 @@ for symbol in symbols.split(','):
                             df['Close'][-1],
                             df['High'][-1],
                             df['Low'][-1],
-                            df['OBV']
+                            df['OBV'][-1]
 ]
       return ssa_df
       #fmt="{0:18}{1:8.2f} * {2:8.2f} {3:4} {4:8.2f} {5:4} * {6:8.2f} {7:4} {8:8.2f} {9:4} * {10:8.2f} {11:4} {12:8.2f} {13:4} * {14:18,.0f} {15:4} {16:18,.0f} {17:4} {18:18,.2f} {19:18,.2f}"
@@ -223,5 +225,7 @@ ssa_df.to_excel(filename)
 
 from termcolor import colored
 print('Check output file:' +colored(filename,'red'))
+import os
+os.system("start EXCEL.EXE "+filename)
 # Show the results for the first time series and its subseries
 
