@@ -116,6 +116,9 @@ ssa_columns={'ticker':[],
             'X_ssa_0':[], 'X_ssa_0_dir':[], 'X_ssa_0_slope':[],  'X_ssa_0_acceleration':[],
             'X_ssa_1':[], 'X_ssa_1_dir':[], 'X_ssa_1_slope':[], 
 
+            'MF_ssa_0':[], 'MF_ssa_0_dir':[], 'MF_ssa_0_slope':[], 'MF_ssa_0_acceleration':[], 
+            'MF_ssa_1':[], 'MF_ssa_1_dir':[], 'MF_ssa_1_slope':[],
+
             'OBV_ssa_0':[], 'OBV_ssa_0_dir':[], 'OBV_ssa_0_slope':[], 'OBV_ssa_0_acceleration':[], 
             'OBV_ssa_1':[], 'OBV_ssa_1_dir':[], 'OBV_ssa_1_slope':[],
 
@@ -125,7 +128,8 @@ ssa_columns={'ticker':[],
             'Close':[], 
             'Low':[],
             'High':[], 
-            'OBV':[]
+            'OBV':[],
+            'Moneyflow':[]
             }
 ssa_df=pd.DataFrame(ssa_columns)
 ssa_df.set_index('ticker')
@@ -136,6 +140,7 @@ for symbol in symbols.split(','):
   if df is not None:
     
     df['OBV']=talib.OBV(df['Close'], df['Volume'])
+    df['Moneyflow']=talib.OBV(df['Close'], df['Volume']*df['Close'])
     # We decompose the time series into three subseries
     window_size = 20
 
@@ -156,6 +161,9 @@ for symbol in symbols.split(','):
     OBV.append(df['OBV'])
     OBV_ssa = ssa.fit_transform(OBV)
 
+    MF=[]
+    MF.append(df['Moneyflow'])
+    MF_ssa = ssa.fit_transform(MF)
 
     def upordown(arr):
       if round(arr[-1],2)==round(arr[-2],2):
@@ -190,13 +198,16 @@ for symbol in symbols.split(','):
 
       print(fmt.format(symbol, X_ssa[0][-1],upordown(X_ssa[0]),slope(X_ssa[0]),acceration(X_ssa[0]), X_ssa[1][-1],upordown(X_ssa[1]), slope(X_ssa[1]), V_ssa[0][-1],upordown(V_ssa[0]),slope(V_ssa[0]), acceration(V_ssa[0]),V_ssa[1][-1],upordown(V_ssa[1]),slope(V_ssa[1]) ))
       pass
-    def add_ssa_df(symbol,df,X_ssa, V_ssa,ssa_df, OBV_ssa):
+    def add_ssa_df(symbol,df,X_ssa, V_ssa,ssa_df, OBV_ssa, MF_ssa):
       (name, sector)=getStockName(stock_df,symbol)
       ssa_df.loc[symbol] = [symbol,
                             name,
                             sector,
                             X_ssa[0][-1],upordown(X_ssa[0]),slope(X_ssa[0]),acceration(X_ssa[0]),
                             X_ssa[1][-1],upordown(X_ssa[1]), slope(X_ssa[1]),
+                            MF_ssa[0][-1],upordown(MF_ssa[0]),slope(MF_ssa[0]), acceration(MF_ssa[0]),
+                            MF_ssa[1][-1],upordown(MF_ssa[1]),slope(MF_ssa[1]),
+
                             OBV_ssa[0][-1],upordown(OBV_ssa[0]),slope(OBV_ssa[0]), acceration(OBV_ssa[0]),
                             OBV_ssa[1][-1],upordown(OBV_ssa[1]),slope(OBV_ssa[1]),
                             V_ssa[0][-1],upordown(V_ssa[0]),slope(V_ssa[0]),acceration(V_ssa[0]),
@@ -205,7 +216,8 @@ for symbol in symbols.split(','):
                             df['Close'][-1],
                             df['High'][-1],
                             df['Low'][-1],
-                            df['OBV'][-1]
+                            df['OBV'][-1],
+                            df['Moneyflow'][-1]
 ]
       return ssa_df
       #fmt="{0:18}{1:8.2f} * {2:8.2f} {3:4} {4:8.2f} {5:4} * {6:8.2f} {7:4} {8:8.2f} {9:4} * {10:8.2f} {11:4} {12:8.2f} {13:4} * {14:18,.0f} {15:4} {16:18,.0f} {17:4} {18:18,.2f} {19:18,.2f}"
@@ -215,7 +227,7 @@ for symbol in symbols.split(','):
       #print(fmt.format(symbol, X_ssa[0][-1],upordown(X_ssa[0]),slope(X_ssa[0]),acceration(X_ssa[0]), X_ssa[1][-1],upordown(X_ssa[1]), slope(X_ssa[1]), V_ssa[0][-1],upordown(V_ssa[0]),slope(V_ssa[0]), acceration(V_ssa[0]),V_ssa[1][-1],upordown(V_ssa[1]),slope(V_ssa[1]) ))
     pass
     
-    ssa_df=add_ssa_df(symbol,df,X_ssa, V_ssa,ssa_df,OBV_ssa)
+    ssa_df=add_ssa_df(symbol,df,X_ssa, V_ssa,ssa_df,OBV_ssa,MF_ssa)
 
 
   #print_ssa(symbol,X_ssa, V_ssa)
