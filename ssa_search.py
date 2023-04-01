@@ -29,6 +29,7 @@ import yfinance as yf
 
 from os.path import exists
 import yfinance as yf
+import talib
 def getStockNames():
   df=pd.read_excel('CHINA_STOCKs2.xlsx', index_col=0)
   return df
@@ -108,13 +109,19 @@ ssa_columns={'ticker':[],
              'name':[], 
              'sector':[], 
              
-            'X_ssa_0':[], 'X_ssa_0_dir':[], 'X_ssa_0_slope':[], 'X_ssa_0_slope_percent':[], 'X_ssa_0_acceleration':[],
+            'X_ssa_0':[], 'X_ssa_0_dir':[], 'X_ssa_0_slope':[],  'X_ssa_0_acceleration':[],
             'X_ssa_1':[], 'X_ssa_1_dir':[], 'X_ssa_1_slope':[], 
-            'V_ssa_0':[], 'V_ssa_0_dir':[], 'V_ssa_0_slope':[], 'V_ssa_0_slope_percent':[],'V_ssa_0_acceleration':[], 
+
+            'OBV_ssa_0':[], 'OBV_ssa_0_dir':[], 'OBV_ssa_0_slope':[], 'OBV_ssa_0_acceleration':[], 
+            'OBV_ssa_1':[], 'OBV_ssa_1_dir':[], 'OBV_ssa_1_slope':[],
+
+
+            'V_ssa_0':[], 'V_ssa_0_dir':[], 'V_ssa_0_slope':[], 'V_ssa_0_acceleration':[], 
             'V_ssa_1':[], 'V_ssa_1_dir':[], 'V_ssa_1_slope':[],
             'Close':[], 
             'Low':[],
             'High':[], 
+            'OBV':[]
             }
 ssa_df=pd.DataFrame(ssa_columns)
 ssa_df.set_index('ticker')
@@ -123,6 +130,8 @@ stock_df=getStockNames()
 for symbol in symbols.split(','):
   df=GetYahooData(symbol, bars=500, interval='1d')
   if df is not None:
+    
+    df['OBV']=talib.OBV(df['Close'], df['Volume'])
     # We decompose the time series into three subseries
     window_size = 20
 
@@ -138,7 +147,12 @@ for symbol in symbols.split(','):
     V=[]
     V.append(df['Volume'])
     V_ssa = ssa.fit_transform(V)
-    
+
+    OBV=[]
+    OBV.append(df['OBV'])
+    OBV_ssa = ssa.fit_transform(OBV)
+
+
     def upordown(arr):
       if round(arr[-1],2)==round(arr[-2],2):
         return '=='
@@ -147,7 +161,7 @@ for symbol in symbols.split(','):
       else:
         return 'DOWN'
     def slope(arr):
-      return (arr[-1]-arr[-2])/arr[-1]*100
+      return (arr[-1]-arr[-2])/arr[-2]*100
 
     def acceration(arr):
       v0=arr[-1]-arr[-2]
@@ -172,18 +186,22 @@ for symbol in symbols.split(','):
 
       print(fmt.format(symbol, X_ssa[0][-1],upordown(X_ssa[0]),slope(X_ssa[0]),acceration(X_ssa[0]), X_ssa[1][-1],upordown(X_ssa[1]), slope(X_ssa[1]), V_ssa[0][-1],upordown(V_ssa[0]),slope(V_ssa[0]), acceration(V_ssa[0]),V_ssa[1][-1],upordown(V_ssa[1]),slope(V_ssa[1]) ))
       pass
-    def add_ssa_df(symbol,df,X_ssa, V_ssa,ssa_df):
+    def add_ssa_df(symbol,df,X_ssa, V_ssa,ssa_df, OBV_ssa):
       (name, sector)=getStockName(stock_df,symbol)
       ssa_df.loc[symbol] = [symbol,
                             name,
                             sector,
-                            X_ssa[0][-1],upordown(X_ssa[0]),slope(X_ssa[0]),slope(X_ssa[0])/X_ssa[0][-1]*100,acceration(X_ssa[0]),
+                            X_ssa[0][-1],upordown(X_ssa[0]),slope(X_ssa[0]),acceration(X_ssa[0]),
                             X_ssa[1][-1],upordown(X_ssa[1]), slope(X_ssa[1]),
-                            V_ssa[0][-1],upordown(V_ssa[0]),slope(V_ssa[0]),slope(V_ssa[0])/V_ssa[0][-1]*100, acceration(V_ssa[0]),
+                            OBV_ssa[0][-1],upordown(OBV_ssa[0]),slope(OBV_ssa[0]), acceration(OBV_ssa[0]),
+                            OBV_ssa[1][-1],upordown(OBV_ssa[1]),slope(OBV_ssa[1]),
+                            V_ssa[0][-1],upordown(V_ssa[0]),slope(V_ssa[0]),acceration(V_ssa[0]),
                             V_ssa[1][-1],upordown(V_ssa[1]),slope(V_ssa[1]),
+                            
                             df['Close'][-1],
                             df['High'][-1],
                             df['Low'][-1],
+                            df['OBV']
 ]
       return ssa_df
       #fmt="{0:18}{1:8.2f} * {2:8.2f} {3:4} {4:8.2f} {5:4} * {6:8.2f} {7:4} {8:8.2f} {9:4} * {10:8.2f} {11:4} {12:8.2f} {13:4} * {14:18,.0f} {15:4} {16:18,.0f} {17:4} {18:18,.2f} {19:18,.2f}"
@@ -193,7 +211,7 @@ for symbol in symbols.split(','):
       #print(fmt.format(symbol, X_ssa[0][-1],upordown(X_ssa[0]),slope(X_ssa[0]),acceration(X_ssa[0]), X_ssa[1][-1],upordown(X_ssa[1]), slope(X_ssa[1]), V_ssa[0][-1],upordown(V_ssa[0]),slope(V_ssa[0]), acceration(V_ssa[0]),V_ssa[1][-1],upordown(V_ssa[1]),slope(V_ssa[1]) ))
     pass
     
-    ssa_df=add_ssa_df(symbol,df,X_ssa, V_ssa,ssa_df)
+    ssa_df=add_ssa_df(symbol,df,X_ssa, V_ssa,ssa_df,OBV_ssa)
 
 
   #print_ssa(symbol,X_ssa, V_ssa)
