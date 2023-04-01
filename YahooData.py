@@ -45,8 +45,12 @@ def getYahooData_v1(ticker, interval='1m'):
         period='730d'
     else:
         period='max'
-
-    df = yf.download(tickers=ticker, period=period, interval=interval)
+    dataFileName="data/"+ticker +'_max_'+ interval +".csv"
+    if interval.endswith(('d','D')) and exists(dataFileName):
+      print('read yahoo data from cache: ',ticker)
+      df=pd.read_csv(dataFileName, header=0, index_col=0, encoding='utf-8', parse_dates=True)
+    else:
+      df = yf.download(tickers=ticker, period=period, interval=interval)
     return df
 def GetYahooData_v2(symbol, bars=500, interval='1d'):
   #start=datetime.date.today()-datetime.timedelta(days=days)
@@ -62,7 +66,7 @@ def GetYahooData_v2(symbol, bars=500, interval='1d'):
     period='7d'
   elif  interval.endswith('m'):
     period='60d'
-  elif  interval.endswith('h') or interval.endswith('d'):
+  elif  interval.endswith('h'):
     period='730d'
   else:
     period='max'
@@ -73,10 +77,11 @@ def GetYahooData_v2(symbol, bars=500, interval='1d'):
   #elif  interval.endswith('w'):
   #  period=str(days)+'wk'
   
-  dataFileName="data/"+symbol+'_' +period+'_'+ interval +".csv"
-  dataFileName1="data/"+symbol+'_' +'max'+'_'+ interval +".csv"
-  if interval.endswith(('d','D')) and datetime.datetime.now().hour>=13 and (exists(dataFileName) or exists(dataFileName1)):
-    print('read yahoo data from cache')
+  dataFileName="data/"+symbol +'_max_'+ interval +".csv"
+  #dataFileName1="data/"+symbol+'_' +'max'+'_'+ interval +".csv"
+  #if interval.endswith(('d','D')) and datetime.datetime.now().hour>=13 and exists(dataFileName):
+  if interval.endswith(('d','D')) and exists(dataFileName):
+    print('read yahoo data from cache: ',symbol)
     df=pd.read_csv(dataFileName, header=0, index_col=0, encoding='utf-8', parse_dates=True)
     #df.index=df["Date"]
   else:

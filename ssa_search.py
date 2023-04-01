@@ -31,6 +31,7 @@ from os.path import exists
 import yfinance as yf
 import talib
 import warnings
+from YahooData import *
 warnings.filterwarnings('ignore')
 def getStockNames():
   df=pd.read_excel('CHINA_STOCKs2.xlsx', index_col=0)
@@ -44,6 +45,7 @@ def getStockName(stock_df, symbol):
     return (name,sector)
   except:
     return (symbol, 'NA')
+'''
 def GetYahooData(symbol, bars=500, interval='1d'):
   #start=datetime.date.today()-datetime.timedelta(days=days)
   #end=datetime.date.today()
@@ -99,7 +101,7 @@ def GetYahooData(symbol, bars=500, interval='1d'):
   
   return df
 
-
+'''
 import sys
 if len(sys.argv) <2:
   symbols='QQQ,SPX'
@@ -130,7 +132,7 @@ ssa_df.set_index('ticker')
 
 stock_df=getStockNames()
 for symbol in symbols.split(','):
-  df=GetYahooData(symbol, bars=500, interval='1d')
+  df=GetYahooData_v2(symbol, bars=500, interval='1d')
   if df is not None:
     
     df['OBV']=talib.OBV(df['Close'], df['Volume'])
