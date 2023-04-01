@@ -102,6 +102,102 @@ def GetYahooData(symbol, bars=500, interval='1d'):
   return df
 
 '''
+def upordown(arr):
+  if round(arr[-1],2)==round(arr[-2],2):
+    return '=='
+  elif round(arr[-1],2)>round(arr[-2],2):      
+    return 'UP'
+  else:
+    return 'DOWN'
+def slope(arr):
+  return (arr[-1]-arr[-2])/arr[-2]*100
+
+def acceration(arr):
+  v0=arr[-1]-arr[-2]
+  v1=arr[-2]-arr[-3]
+  if round(v0,2)==round(v1,2):
+    return 'no acc'
+  elif round(v0,2)>round(v1,2):
+    if v0>0:
+      return 'up-acc'
+    else:
+      return 'down-slowed'
+  else:
+    if v0 >0:
+      return 'up-slowed'
+    else:
+      return 'down-acc'
+    
+def calculateSSA(symbol,ssa_df):
+  df=GetYahooData_v2(symbol, bars=500, interval='1d')
+  if df is not None:
+    
+    df['OBV']=talib.OBV(df['Close'], df['Volume'])
+    df['Moneyflow']=talib.OBV(df['Close'], df['Volume']*df['Close'])
+    # We decompose the time series into three subseries
+    window_size = 20
+
+    #groups = [np.arange(i, i + 5) for i in range(0, 11, 5)]
+
+    # Singular Spectrum Analysis
+    ssa = SingularSpectrumAnalysis(window_size=window_size, groups=None)
+    X=[]
+    closes = df['Close'].rename('close')
+    X.append(df['Close'])
+    X_ssa = ssa.fit_transform(X)
+
+    V=[]
+    V.append(df['Volume'])
+    V_ssa = ssa.fit_transform(V)
+
+    OBV=[]
+    OBV.append(df['OBV'])
+    OBV_ssa = ssa.fit_transform(OBV)
+
+    MF=[]
+    MF.append(df['Moneyflow'])
+    MF_ssa = ssa.fit_transform(MF)
+
+
+
+    def print_ssa(symbol,X_ssa, V_ssa):    
+      #fmt="{0:18}{1:8.2f} * {2:8.2f} {3:4} {4:8.2f} {5:4} * {6:8.2f} {7:4} {8:8.2f} {9:4} * {10:8.2f} {11:4} {12:8.2f} {13:4} * {14:18,.0f} {15:4} {16:18,.0f} {17:4} {18:18,.2f} {19:18,.2f}"
+      #print(fmt.format(df.index[-i-1].strftime("%m/%d/%Y %H:%M"), df['Close'][-i-1], wf_close[0][-i-1],closedir,wf_close[1][-i-1],close1dir,wf_high[0][-i-1],highdir,wf_high[1][-i-1],high1dir,wf_low[0][-i-1],lowdir,wf_low[1][-i-1],low1dir,wf_vol[0][-i-1],voldir,wf_vol[1][-i-1],vol1dir, gf3[i], gf5[i]))
+      fmt="{0:8} {1:8.2f} {2:4} {3:8.2f} {4:11}* {5:8.2f} {6:4} {7:8.2f} *** {8:18,.0f} {9:4} {10:8.2f} {11:11} * {12:18,.0f} {13:4}  {14:8.2f}"
+
+      print(fmt.format(symbol, X_ssa[0][-1],upordown(X_ssa[0]),slope(X_ssa[0]),acceration(X_ssa[0]), X_ssa[1][-1],upordown(X_ssa[1]), slope(X_ssa[1]), V_ssa[0][-1],upordown(V_ssa[0]),slope(V_ssa[0]), acceration(V_ssa[0]),V_ssa[1][-1],upordown(V_ssa[1]),slope(V_ssa[1]) ))
+      pass
+    def add_ssa_df(symbol,df,X_ssa, V_ssa,ssa_df, OBV_ssa, MF_ssa):
+      (name, sector)=getStockName(stock_df,symbol)
+      ssa_df.loc[symbol] = [symbol,
+                            name,
+                            sector,
+                            X_ssa[0][-1],upordown(X_ssa[0]),slope(X_ssa[0]),acceration(X_ssa[0]),
+                            X_ssa[1][-1],upordown(X_ssa[1]), slope(X_ssa[1]),
+                            MF_ssa[0][-1],upordown(MF_ssa[0]),slope(MF_ssa[0]), acceration(MF_ssa[0]),
+                            MF_ssa[1][-1],upordown(MF_ssa[1]),slope(MF_ssa[1]),
+
+                            OBV_ssa[0][-1],upordown(OBV_ssa[0]),slope(OBV_ssa[0]), acceration(OBV_ssa[0]),
+                            OBV_ssa[1][-1],upordown(OBV_ssa[1]),slope(OBV_ssa[1]),
+                            V_ssa[0][-1],upordown(V_ssa[0]),slope(V_ssa[0]),acceration(V_ssa[0]),
+                            V_ssa[1][-1],upordown(V_ssa[1]),slope(V_ssa[1]),
+                            
+                            df['Close'][-1],
+                            df['High'][-1],
+                            df['Low'][-1],
+                            df['OBV'][-1],
+                            df['Moneyflow'][-1]
+                          ]
+      return ssa_df
+      #fmt="{0:18}{1:8.2f} * {2:8.2f} {3:4} {4:8.2f} {5:4} * {6:8.2f} {7:4} {8:8.2f} {9:4} * {10:8.2f} {11:4} {12:8.2f} {13:4} * {14:18,.0f} {15:4} {16:18,.0f} {17:4} {18:18,.2f} {19:18,.2f}"
+      #print(fmt.format(df.index[-i-1].strftime("%m/%d/%Y %H:%M"), df['Close'][-i-1], wf_close[0][-i-1],closedir,wf_close[1][-i-1],close1dir,wf_high[0][-i-1],highdir,wf_high[1][-i-1],high1dir,wf_low[0][-i-1],lowdir,wf_low[1][-i-1],low1dir,wf_vol[0][-i-1],voldir,wf_vol[1][-i-1],vol1dir, gf3[i], gf5[i]))
+      fmt="{0:8} {1:8.2f} {2:4} {3:8.2f} {4:11}* {5:8.2f} {6:4} {7:8.2f} *** {8:18,.0f} {9:4} {10:8.2f} {11:11} * {12:18,.0f} {13:4}  {14:8.2f}"
+
+      #print(fmt.format(symbol, X_ssa[0][-1],upordown(X_ssa[0]),slope(X_ssa[0]),acceration(X_ssa[0]), X_ssa[1][-1],upordown(X_ssa[1]), slope(X_ssa[1]), V_ssa[0][-1],upordown(V_ssa[0]),slope(V_ssa[0]), acceration(V_ssa[0]),V_ssa[1][-1],upordown(V_ssa[1]),slope(V_ssa[1]) ))
+    pass
+    
+    ssa_df=add_ssa_df(symbol,df,X_ssa, V_ssa,ssa_df,OBV_ssa,MF_ssa)
+    return ssa_df
 import sys
 if len(sys.argv) <2:
   symbols='QQQ,SPX'
@@ -136,99 +232,10 @@ ssa_df.set_index('ticker')
 
 stock_df=getStockNames()
 for symbol in symbols.split(','):
-  df=GetYahooData_v2(symbol, bars=500, interval='1d')
-  if df is not None:
-    
-    df['OBV']=talib.OBV(df['Close'], df['Volume'])
-    df['Moneyflow']=talib.OBV(df['Close'], df['Volume']*df['Close'])
-    # We decompose the time series into three subseries
-    window_size = 20
-
-    #groups = [np.arange(i, i + 5) for i in range(0, 11, 5)]
-
-    # Singular Spectrum Analysis
-    ssa = SingularSpectrumAnalysis(window_size=window_size, groups=None)
-    X=[]
-    closes = df['Close'].rename('close')
-    X.append(df['Close'])
-    X_ssa = ssa.fit_transform(X)
-
-    V=[]
-    V.append(df['Volume'])
-    V_ssa = ssa.fit_transform(V)
-
-    OBV=[]
-    OBV.append(df['OBV'])
-    OBV_ssa = ssa.fit_transform(OBV)
-
-    MF=[]
-    MF.append(df['Moneyflow'])
-    MF_ssa = ssa.fit_transform(MF)
-
-    def upordown(arr):
-      if round(arr[-1],2)==round(arr[-2],2):
-        return '=='
-      elif round(arr[-1],2)>round(arr[-2],2):      
-        return 'UP'
-      else:
-        return 'DOWN'
-    def slope(arr):
-      return (arr[-1]-arr[-2])/arr[-2]*100
-
-    def acceration(arr):
-      v0=arr[-1]-arr[-2]
-      v1=arr[-2]-arr[-3]
-      if round(v0,2)==round(v1,2):
-        return 'no acc'
-      elif round(v0,2)>round(v1,2):
-        if v0>0:
-          return 'up-acc'
-        else:
-          return 'down-slowed'
-      else:
-        if v0 >0:
-          return 'up-slowed'
-        else:
-          return 'down-acc'
-
-    def print_ssa(symbol,X_ssa, V_ssa):    
-      #fmt="{0:18}{1:8.2f} * {2:8.2f} {3:4} {4:8.2f} {5:4} * {6:8.2f} {7:4} {8:8.2f} {9:4} * {10:8.2f} {11:4} {12:8.2f} {13:4} * {14:18,.0f} {15:4} {16:18,.0f} {17:4} {18:18,.2f} {19:18,.2f}"
-      #print(fmt.format(df.index[-i-1].strftime("%m/%d/%Y %H:%M"), df['Close'][-i-1], wf_close[0][-i-1],closedir,wf_close[1][-i-1],close1dir,wf_high[0][-i-1],highdir,wf_high[1][-i-1],high1dir,wf_low[0][-i-1],lowdir,wf_low[1][-i-1],low1dir,wf_vol[0][-i-1],voldir,wf_vol[1][-i-1],vol1dir, gf3[i], gf5[i]))
-      fmt="{0:8} {1:8.2f} {2:4} {3:8.2f} {4:11}* {5:8.2f} {6:4} {7:8.2f} *** {8:18,.0f} {9:4} {10:8.2f} {11:11} * {12:18,.0f} {13:4}  {14:8.2f}"
-
-      print(fmt.format(symbol, X_ssa[0][-1],upordown(X_ssa[0]),slope(X_ssa[0]),acceration(X_ssa[0]), X_ssa[1][-1],upordown(X_ssa[1]), slope(X_ssa[1]), V_ssa[0][-1],upordown(V_ssa[0]),slope(V_ssa[0]), acceration(V_ssa[0]),V_ssa[1][-1],upordown(V_ssa[1]),slope(V_ssa[1]) ))
-      pass
-    def add_ssa_df(symbol,df,X_ssa, V_ssa,ssa_df, OBV_ssa, MF_ssa):
-      (name, sector)=getStockName(stock_df,symbol)
-      ssa_df.loc[symbol] = [symbol,
-                            name,
-                            sector,
-                            X_ssa[0][-1],upordown(X_ssa[0]),slope(X_ssa[0]),acceration(X_ssa[0]),
-                            X_ssa[1][-1],upordown(X_ssa[1]), slope(X_ssa[1]),
-                            MF_ssa[0][-1],upordown(MF_ssa[0]),slope(MF_ssa[0]), acceration(MF_ssa[0]),
-                            MF_ssa[1][-1],upordown(MF_ssa[1]),slope(MF_ssa[1]),
-
-                            OBV_ssa[0][-1],upordown(OBV_ssa[0]),slope(OBV_ssa[0]), acceration(OBV_ssa[0]),
-                            OBV_ssa[1][-1],upordown(OBV_ssa[1]),slope(OBV_ssa[1]),
-                            V_ssa[0][-1],upordown(V_ssa[0]),slope(V_ssa[0]),acceration(V_ssa[0]),
-                            V_ssa[1][-1],upordown(V_ssa[1]),slope(V_ssa[1]),
-                            
-                            df['Close'][-1],
-                            df['High'][-1],
-                            df['Low'][-1],
-                            df['OBV'][-1],
-                            df['Moneyflow'][-1]
-]
-      return ssa_df
-      #fmt="{0:18}{1:8.2f} * {2:8.2f} {3:4} {4:8.2f} {5:4} * {6:8.2f} {7:4} {8:8.2f} {9:4} * {10:8.2f} {11:4} {12:8.2f} {13:4} * {14:18,.0f} {15:4} {16:18,.0f} {17:4} {18:18,.2f} {19:18,.2f}"
-      #print(fmt.format(df.index[-i-1].strftime("%m/%d/%Y %H:%M"), df['Close'][-i-1], wf_close[0][-i-1],closedir,wf_close[1][-i-1],close1dir,wf_high[0][-i-1],highdir,wf_high[1][-i-1],high1dir,wf_low[0][-i-1],lowdir,wf_low[1][-i-1],low1dir,wf_vol[0][-i-1],voldir,wf_vol[1][-i-1],vol1dir, gf3[i], gf5[i]))
-      fmt="{0:8} {1:8.2f} {2:4} {3:8.2f} {4:11}* {5:8.2f} {6:4} {7:8.2f} *** {8:18,.0f} {9:4} {10:8.2f} {11:11} * {12:18,.0f} {13:4}  {14:8.2f}"
-
-      #print(fmt.format(symbol, X_ssa[0][-1],upordown(X_ssa[0]),slope(X_ssa[0]),acceration(X_ssa[0]), X_ssa[1][-1],upordown(X_ssa[1]), slope(X_ssa[1]), V_ssa[0][-1],upordown(V_ssa[0]),slope(V_ssa[0]), acceration(V_ssa[0]),V_ssa[1][-1],upordown(V_ssa[1]),slope(V_ssa[1]) ))
+  try:
+    calculateSSA(symbol,ssa_df)
+  except:
     pass
-    
-    ssa_df=add_ssa_df(symbol,df,X_ssa, V_ssa,ssa_df,OBV_ssa,MF_ssa)
-
 
   #print_ssa(symbol,X_ssa, V_ssa)
 ssa_df.head()

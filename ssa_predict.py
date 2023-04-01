@@ -32,6 +32,10 @@ import yfinance as yf
 
 from os.path import exists
 import yfinance as yf
+from YahooData import *
+import warnings
+warnings.filterwarnings('ignore')
+'''
 def GetYahooData(symbol, bars=500, interval='1d'):
   #start=datetime.date.today()-datetime.timedelta(days=days)
   #end=datetime.date.today()
@@ -79,7 +83,7 @@ def GetYahooData(symbol, bars=500, interval='1d'):
   #df["datefmt"]=df.index.strftime('%m/%d/%Y')
   
   return df
-
+'''
 
 
 
@@ -163,7 +167,7 @@ def plot_ssa(symbol,df, window_size,colnames):
   
   for i in range(1, int(window_size/2)):
       newcol='Close_ssa_' +str(i)
-      df[newcol]=df[newcol]
+      #df[newcol]=df[newcol]
       if i>=4:
         width=1
       else:
@@ -257,22 +261,25 @@ def arimar_predit(df, colnames,numberofssacomps,  days2predict=5):
   #pass
 
 import sys
+interval='1d'
 if len(sys.argv) <2:
   #symbols='QQQ,SPX,000001.ss,399001.sz'
   symbols='QQQ'
 if len(sys.argv) >=2:
   symbols=sys.argv[1]
+if len(sys.argv) >=3:
+  interval=sys.argv[2]
 
 for symbol in symbols.split(','):
-  df=GetYahooData(symbol, bars=500, interval='1d')
+  df=GetYahooData_v2(symbol, bars=500, interval=interval)
   #closes = df['Adj Close'].rename('close')
-  window_size=20
+  window_size=26
   colnames=['Close','High','Low']
   for colname in colnames:
   #for colname in ['Close']:
     df=calc_ssa(df,colname,window_size)    
     
-  df=arimar_predit(df,colnames, 3,5)
+  df=arimar_predit(df,colnames, 3,10)
   plot_ssa(symbol,df, window_size, colnames)
   
   #plot_ssa(symbol,df, window_size, X_ssa, dates,predict)
