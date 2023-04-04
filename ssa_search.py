@@ -35,13 +35,15 @@ from YahooData import *
 warnings.filterwarnings('ignore')
 def getStockNames():
   df=pd.read_excel('CHINA_STOCKs2.xlsx', index_col=0)
+  df['ticker']=df.index
+  df['name']=df['名称']
+  df['sector']=df['细分行业']
   return df
 
 def getStockName(stock_df, symbol):
   try:
-    row=stock_df.loc[symbol[0:6]]
-    name=row['名称']
-    sector=row['细分行业']
+    name=stock_df.loc[int(symbol[0:6]),'name']
+    sector=stock_df.loc[int(symbol[0:6]),'sector']
     return (name,sector)
   except:
     return (symbol, 'NA')
@@ -200,7 +202,7 @@ def calculateSSA(symbol,ssa_df):
     return ssa_df
 import sys
 if len(sys.argv) <2:
-  symbols='QQQ,SPX'
+  symbols='002049.sz,QQQ,SPX'
 if len(sys.argv) >=2:
   symbols=sys.argv[1]
 
