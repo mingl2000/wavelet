@@ -64,9 +64,9 @@ def stock_csv(filepath):
 paths=['D:/Apps/goldsun/vipdoc/sh/lday/','D:/Apps/goldsun/vipdoc/sz/lday/']
 def GetTDXData_v2(symbol, bars=500, interval='1d'):
   for path in paths:
-    exchange=symbol[-2:]
+    exchange=path[-8:-6]
     filename=path+exchange+symbol[:6]+'.day'
     if exists(filename):
       return stock_csv(filename)
 
-#GetTDXData_v2('002049.sz',500,'1d')
+GetTDXData_v2('002049.sz',500,'1d')
