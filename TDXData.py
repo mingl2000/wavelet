@@ -53,7 +53,8 @@ def stock_csv(filepath):
           #file_object.writelines(list)
           stock_date=datetime.strptime(str(stock_date[0]), '%Y%M%d')
           df.loc[stock_date] = [stock_date,
-                          stock_open[0],stock_high[0],stock_low[0],stock_close[0],stock_amount[0],stock_vol[0],stock_reservation[0]]
+                          stock_open[0]/100.,stock_high[0]/100.,stock_low[0]/100.,stock_close[0]/100.,stock_amount[0],stock_vol[0],stock_reservation[0]]
+  df['vwap']=df['Amount']/df['Volume']
   df["id"]=np.arange(len(df))
   return df
         #file_object.close()

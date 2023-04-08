@@ -351,7 +351,7 @@ if len(sys.argv) <1:
   print("interval can be 1m, 5m, 15m, 30m, 1h, 1d, 1wk, 1mo, 3mo")
   print("python .\mingwave3.py QQQ 256 1d True 20 True 128 0l5")
 if len(sys.argv) <2:
-  ticker='QQQ'
+  ticker='002049.sz'
 if len(sys.argv) >=2:
   ticker=sys.argv[1]
 if len(sys.argv) >=3:
@@ -375,7 +375,8 @@ if len(sys.argv) >=9:
 #df= GetYahooData_v2(ticker,historylen,interval)
 df= GetTDXData_v2(ticker,historylen,interval)
 
-x= df["Close"].to_numpy() 
+#x= df["Close"].to_numpy() 
+x=df['vwap'].to_numpy() 
 gf2 = gaussian_filter1d(x, 2)
 gf3 = gaussian_filter1d(x, 3)
 gf5 = gaussian_filter1d(x, 5)
@@ -400,6 +401,11 @@ wf_high=WT(df['High'], plot=False)
 wf_low=WT(df['Low'], plot=False)
 wf_vol=WT(df['Volume'], plot=False)
 
+if 'vwap' in df.columns:
+  wf_vwap=WT(df['vwap'], plot=False)
+  wf_vwap_lt=WT(df['vwap'], wavefunc='db4', lv=5, m=1, n=5,plot=False)
+  df["coeff_vwap"] = wf_vwap[0]
+  df["coeff_vwap_lt"] = wf_vwap_lt[0]
 df["coeff_close"] = wf_close[0]
 df["coeff_close_lt"] = wf_close_lt[0]
 df["coeff_high"]= wf_high[0]
@@ -463,6 +469,8 @@ for i in range(len(wf_close)):
   wf_low[i]=wf_low[i][-daystoplot:]
   wf_high[i]=wf_high[i][-daystoplot:]
   wf_vol[i]=wf_vol[i][-daystoplot:]
+  if 'vwap' in df.columns:
+    wf_vwap[i]=wf_vwap[i][-daystoplot:]
 
 mc = mpf.make_marketcolors(
                            volume='lightgray'
@@ -484,6 +492,9 @@ apdict = [
         #mpf.make_addplot(wf_vol[1],panel=2,ylabel='wf_vol[1]',y_on_right=False),
         mpf.make_addplot((df['coeff_vol']),panel=1,color='r'),
         mpf.make_addplot((df['coeff_vol_01']),panel=1,color='g')]
+if 'vwap' in df.columns:
+  apdict.append(mpf.make_addplot(df['coeff_vwap']))
+  apdict.append(mpf.make_addplot(df['coeff_vwap_lt']))
 fig1,ax1=mpf.plot(df,type='candle',volume=True,addplot=apdict, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False,title=ticker)
 fig1.suptitle('wavelet')
 
@@ -517,7 +528,7 @@ window_sizes='5, 10,15,20, 25,30'
 plot_ssa_compare(df, ticker, window_sizes,True)
 plot_ssa_compare(df, ticker, window_sizes,False)
 
-KalmanFilterPlot(ticker, historylen, interval)
+KalmanFilterPlot2(ticker, df)
 #cursor = MultiCursor(None, tuple(ax1)+tuple(ax2)+tuple(ax3)+tuple(ax4)+tuple(ax5), color='r',lw=0.5, horizOn=True, vertOn=True)
 plt.show()
 #crosshairs(xlabel='t',ylabel='F')
