@@ -32,6 +32,7 @@ import yfinance as yf
 import talib
 import warnings
 from YahooData import *
+from TDXData import *
 warnings.filterwarnings('ignore')
 def getStockNames():
   df=pd.read_excel('CHINA_STOCKs2.xlsx', index_col=0)
@@ -130,8 +131,8 @@ def acceration(arr):
     else:
       return 'down-acc'
     
-def calculateSSA(symbol,ssa_df):
-  df=GetYahooData_v2(symbol, bars=500, interval='1d')
+def calculateSSA(symbol,ssa_df,df):
+  #df=GetYahooData_v2(symbol, bars=500, interval='1d')
   if df is not None:
     
     df['OBV']=talib.OBV(df['Close'], df['Volume'])
@@ -200,11 +201,31 @@ def calculateSSA(symbol,ssa_df):
     
     ssa_df=add_ssa_df(symbol,df,X_ssa, V_ssa,ssa_df,OBV_ssa,MF_ssa)
     return ssa_df
+
+def getAllCNStockSymbols():
+  paths=['D:/Apps/goldsun/vipdoc/sh/lday/','D:/Apps/goldsun/vipdoc/sz/lday/']
+  symbols=[]
+  for path in paths:
+    files = os.listdir(path)
+    for file in files:
+      if file[2:3] in ['0','3','6']:
+        symbols.append(file[2:8]+'.'+path[-8:-6])
+        print(symbols[-1])
+  return symbols
 import sys
+import os
 if len(sys.argv) <2:
-  symbols='002049.sz,QQQ,SPX'
-if len(sys.argv) >=2:
-  symbols=sys.argv[1]
+  prefix='My'
+if len(sys.argv) >=3:
+  prefix=sys.argv[1]
+if len(sys.argv) <3:
+  symbols=['159998.ss']
+if len(sys.argv) >=3:
+  if sys.argv[2]=='AllCN':
+    symbols=getAllCNStockSymbols()
+  else:
+    symbols=sys.argv[2]
+    symbols=symbols.split(',')
 
 #data = quandl.get('WIKI/%s' % instrument, start_date='2017-01-01', end_date='2012-02-10')
 ssa_columns={'ticker':[], 
@@ -233,17 +254,23 @@ ssa_df=pd.DataFrame(ssa_columns)
 ssa_df.set_index('ticker')
 
 stock_df=getStockNames()
-for symbol in symbols.split(','):
+for symbol in symbols:
   try:
-    calculateSSA(symbol,ssa_df)
-  except:
+    if symbol[7:].lower() in ['sz','sh','ss']:
+      df=GetTDXData_v2(symbol,500,'1d')
+    if df is None:
+      df=GetYahooData_v2(symbol,500,'1d')
+    
+    calculateSSA(symbol,ssa_df, df)
+  except Exception as e:
+    print(e)
     pass
 
   #print_ssa(symbol,X_ssa, V_ssa)
 ssa_df.head()
 ssa_df.to_csv('ssa_search.csv', index=False)
-fmt="ssa_search_{0}.xlsx"
-filename=fmt.format(datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S"))
+fmt="ssa_search_{0}_{1}.xlsx"
+filename=fmt.format(prefix, datetime.now().strftime("%Y_%m_%d_%H_%M_%S"))
 ssa_df.to_excel(filename)
 
 from termcolor import colored

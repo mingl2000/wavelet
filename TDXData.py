@@ -5,7 +5,8 @@ import os
 import pandas as pd
 from datetime import datetime
 from os.path import exists
-def stock_csv(filepath):
+def stock_csv(filepath,bars):
+  print('stock_csv', filepath)
   data = []
   ssa_columns={'Date':[], 
             'Open':[], 
@@ -19,11 +20,16 @@ def stock_csv(filepath):
   }
   df=pd.DataFrame(ssa_columns)
   df.set_index('Date')
+  
+
   with open(filepath, 'rb') as f:
       #file_object_path = 'D:/Projects/PlutusPy/importexport/StockDir/' + name +'.csv'
       #file_object = open(file_object_path, 'w+')
       head="Date,High,Low,Open,Close,Volume,Adj Close"+"\r\n"
       #file_object.writelines(head)
+      seekat=os.stat(filepath).st_size - bars*4*8
+      if seekat>0:
+        f.seek(seekat)
       while True:
           stock_date = f.read(4)
           stock_open = f.read(4)
@@ -67,6 +73,7 @@ def GetTDXData_v2(symbol, bars=500, interval='1d'):
     exchange=path[-8:-6]
     filename=path+exchange+symbol[:6]+'.day'
     if exists(filename):
-      return stock_csv(filename)
-
-GetTDXData_v2('002049.sz',500,'1d')
+      return stock_csv(filename,bars)
+  return None
+if __name__ == '__main__':
+  GetTDXData_v2('159998.ss',500,'1d')
