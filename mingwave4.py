@@ -239,6 +239,7 @@ def plot_ssa_compare(df, symbol, window_sizes, showcomponents=False):
   '''
 
   fig1,ax1=mpf.plot(df,type='candle',volume=False,volume_panel=2,addplot=apdict, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False, title=ticker,panel_ratios=(1,2))
+  fig1.suptitle('SSA_components')
   V=[]
   V.append(df['Volume'])
   ssav = SingularSpectrumAnalysis(window_size=window_size, groups=None)
@@ -247,7 +248,7 @@ def plot_ssa_compare(df, symbol, window_sizes, showcomponents=False):
   apdict.append(mpf.make_addplot(df['V_ssa'], secondary_y=False, panel=2))
   if showcomponents:
     fig1,ax1=mpf.plot(df,type='candle',volume=True,volume_panel=2,addplot=apdict, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False, title=ticker)
-
+    fig1.suptitle('SingularSpectrumAnalysis')
 
   # The first subseries consists of the trend of the original time series.
   # The second and third subseries consist of noise.
@@ -273,11 +274,13 @@ def multi_plot_wt(df, wavlet_close, wavlet_high, wavlet_low):
     #cursor = MultiCursor(None, tuple(ax), color='r',lw=0.5, horizOn=True, vertOn=True)
     
     plt.show(block=False)
+    plt.title='multi_plot_wt'
     return (fig, ax)
     
 def plot_wt(df, colname, wavelet):
     plt.margins(0.1)
     fig, ax =  plt.subplots(len(wavelet), 1, figsize=figsize,sharex=True)
+    
     for i in range(len(wf_close)):
         if i == 0:
             ax[i].plot(df["id"],df[colname], label = colname, color='lightgray')
@@ -290,6 +293,7 @@ def plot_wt(df, colname, wavelet):
     #cursor = MultiCursor(None, tuple(ax), color='r',lw=0.5, horizOn=True, vertOn=True)
     
     plt.show(block=False)
+    plt.title='plot_wt'
     return (fig, ax)
 
     
@@ -478,10 +482,10 @@ apdict = [
         mpf.make_addplot((df['coeff_vol']),panel=1,color='r'),
         mpf.make_addplot((df['coeff_vol_01']),panel=1,color='g')]
 fig1,ax1=mpf.plot(df,type='candle',volume=True,addplot=apdict, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False,title=ticker)
-
+fig1.suptitle('wavelet')
 
 fig2,ax2=mpf.plot(df,type='candle',volume=True,addplot=apdict, figsize=figsize,tight_layout=True, panel_ratios=(1,1),style=s,returnfig=True,block=False,title=ticker)
-
+fig2.suptitle('wavelet')
 apdict = [
         mpf.make_addplot(df["gf3"], width=3, color='r',linestyle='dashdot'),
         mpf.make_addplot(df["gf5"], width=5, color='y',linestyle='dashdot'),
@@ -499,16 +503,21 @@ apdict = [
         ]
 
 fig3,ax3=mpf.plot(df,type='candle',volume=False,addplot=apdict, figsize=figsize,tight_layout=True,returnfig=True,block=False,title=ticker)
+fig3.suptitle('gf & wf')
 fig6,ax6=mpf.plot(df,type='renko',volume=False, figsize=figsize,tight_layout=True,returnfig=True,block=False, renko_params=dict(brick_size=brick_size),title=ticker)
 (fig5, ax5)=plot_wt(df, 'Volume', wf_vol)
+fig5.suptitle('plot_wt Volume')
 (fig4, ax4)=multi_plot_wt(df, wf_close, wf_high,wf_low)
-
+fig4.suptitle('multi_plot_wt wf_close,wf_high wf_low')
 #plot_ssa_compare
 window_sizes='5, 10,15,20, 25,30'
 plot_ssa_compare(df, ticker, window_sizes,True)
 plot_ssa_compare(df, ticker, window_sizes,False)
+try:
+  KalmanFilterPlot(ticker, historylen, interval)
+except:
+  pass
 
-KalmanFilterPlot(ticker, historylen, interval)
 #cursor = MultiCursor(None, tuple(ax1)+tuple(ax2)+tuple(ax3)+tuple(ax4)+tuple(ax5), color='r',lw=0.5, horizOn=True, vertOn=True)
 plt.show()
 #crosshairs(xlabel='t',ylabel='F')
