@@ -138,7 +138,7 @@ def calculateSSA(symbol,ssa_df,df):
     df['OBV']=talib.OBV(df['Close'], df['Volume'])
     df['Moneyflow']=talib.OBV(df['Close'], df['Volume']*df['Close'])
     # We decompose the time series into three subseries
-    window_size = 20
+    window_size = 13
 
     #groups = [np.arange(i, i + 5) for i in range(0, 11, 5)]
 
@@ -185,11 +185,11 @@ def calculateSSA(symbol,ssa_df,df):
                             V_ssa[0][-1],upordown(V_ssa[0]),slope(V_ssa[0]),acceration(V_ssa[0]),
                             V_ssa[1][-1],upordown(V_ssa[1]),slope(V_ssa[1]),
                             
-                            df['Close'][-1],
-                            df['High'][-1],
-                            df['Low'][-1],
-                            df['OBV'][-1],
-                            df['Moneyflow'][-1]
+                            float(df['Close'][-1:]),
+                            float(df['High'][-1:]),
+                            float(df['Low'][-1:]),
+                            float(df['OBV'][-1:]),
+                            float(df['Moneyflow'][-1:])
                           ]
       return ssa_df
       #fmt="{0:18}{1:8.2f} * {2:8.2f} {3:4} {4:8.2f} {5:4} * {6:8.2f} {7:4} {8:8.2f} {9:4} * {10:8.2f} {11:4} {12:8.2f} {13:4} * {14:18,.0f} {15:4} {16:18,.0f} {17:4} {18:18,.2f} {19:18,.2f}"

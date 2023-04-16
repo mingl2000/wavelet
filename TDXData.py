@@ -8,20 +8,6 @@ from os.path import exists
 def stock_csv(filepath,bars):
   print('stock_csv', filepath)
   data = []
-  ssa_columns={'Date':[], 
-            'Open':[], 
-            'High':[],
-            'Low':[], 
-            'Close':[],
-#             'Adj Close':[],
-            'Amount':[], 
-            'Volume':[],
-            'Reservation':[]
-  }
-  df=pd.DataFrame(ssa_columns)
-  df.set_index('Date')
-  
-
   with open(filepath, 'rb') as f:
       #file_object_path = 'D:/Projects/PlutusPy/importexport/StockDir/' + name +'.csv'
       #file_object = open(file_object_path, 'w+')
@@ -30,7 +16,28 @@ def stock_csv(filepath,bars):
       seekat=os.stat(filepath).st_size - bars*4*8
       if seekat>0:
         f.seek(seekat)
-      while True:
+      data=f.read(os.stat(filepath).st_size-seekat)
+      i=0
+      arr=[]
+      while i<len(data):
+          stock_date = data[i:i+4]
+          i=i+4
+          stock_open = data[i:i+4]
+          i=i+4
+          stock_high = data[i:i+4]
+          i=i+4
+          stock_low = data[i:i+4]
+          i=i+4
+          stock_close = data[i:i+4]
+          i=i+4
+          stock_amount = data[i:i+4]
+          i=i+4
+          stock_vol = data[i:i+4]
+          i=i+4
+          stock_reservation = data[i:i+4]
+          i=i+4
+
+          '''
           stock_date = f.read(4)
           stock_open = f.read(4)
           stock_high = f.read(4)
@@ -39,7 +46,7 @@ def stock_csv(filepath,bars):
           stock_amount = f.read(4)
           stock_vol = f.read(4)
           stock_reservation = f.read(4)
-
+          '''
           # date,open,high,low,close,amount,vol,reservation
           #day,high,low,open,close,volume,Adj Close
           if not stock_date:
@@ -58,8 +65,24 @@ def stock_csv(filepath,bars):
           #list= date_format.strftime('%Y-%M-%d')+","+str(stock_high[0]/100.0)+","+str(stock_low[0]/100.0)+","+str(stock_open[0]/100)+","+str(stock_close[0]/100.0)+","+str(stock_vol[0]/100.0)+","+str(stock_amount[0])+"\r\n"
           #file_object.writelines(list)
           stock_date=datetime.strptime(str(stock_date[0]), '%Y%M%d')
-          df.loc[stock_date] = [stock_date,
-                          stock_open[0]/100.,stock_high[0]/100.,stock_low[0]/100.,stock_close[0]/100.,stock_amount[0],stock_vol[0],stock_reservation[0]]
+          arr.append([stock_date,
+                          stock_open[0]/100.,stock_high[0]/100.,stock_low[0]/100.,stock_close[0]/100.,stock_amount[0],stock_vol[0],stock_reservation[0]])
+          #df.loc[stock_date] = [stock_date,
+          #                stock_open[0]/100.,stock_high[0]/100.,stock_low[0]/100.,stock_close[0]/100.,stock_amount[0],stock_vol[0],stock_reservation[0]]
+  
+  ssa_columns={'Date':[], 
+            'Open':[], 
+            'High':[],
+            'Low':[], 
+            'Close':[],
+#             'Adj Close':[],
+            'Amount':[], 
+            'Volume':[],
+            'Reservation':[]
+  }
+
+  df=pd.DataFrame(arr, columns=ssa_columns)
+  df.set_index('Date')
   df['vwap']=df['Amount']/df['Volume']
   df["id"]=np.arange(len(df))
   return df
@@ -76,4 +99,7 @@ def GetTDXData_v2(symbol, bars=500, interval='1d'):
       return stock_csv(filename,bars)
   return None
 if __name__ == '__main__':
+  start=datetime.now()
   GetTDXData_v2('159998.ss',500,'1d')
+  end=datetime.now()
+  print(end-start)
