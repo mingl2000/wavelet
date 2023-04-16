@@ -175,6 +175,10 @@ def calculateSSA(symbol,ssa_df,df):
       ssa_df.loc[symbol] = [symbol,
                             name,
                             sector,
+                            df['Date'][-1:].to_numpy()[0],
+                            X_ssa[0][-1]+X_ssa[1][-1],upordown(X_ssa[0]+X_ssa[1]),slope(X_ssa[0]+X_ssa[1]),acceration(X_ssa[0]+X_ssa[1]),
+                            MF_ssa[0][-1]+MF_ssa[1][-1],upordown(MF_ssa[0]+MF_ssa[1][-1]),slope(MF_ssa[0]+MF_ssa[1][-1]), acceration(MF_ssa[0]+MF_ssa[1][-1]),
+                            OBV_ssa[0][-1]+OBV_ssa[1][-1],upordown(OBV_ssa[0]+OBV_ssa[1][-1]),slope(OBV_ssa[0]+OBV_ssa[1][-1]), acceration(OBV_ssa[0]+OBV_ssa[1][-1]),
                             X_ssa[0][-1],upordown(X_ssa[0]),slope(X_ssa[0]),acceration(X_ssa[0]),
                             X_ssa[1][-1],upordown(X_ssa[1]), slope(X_ssa[1]),
                             MF_ssa[0][-1],upordown(MF_ssa[0]),slope(MF_ssa[0]), acceration(MF_ssa[0]),
@@ -231,7 +235,11 @@ if len(sys.argv) >=3:
 ssa_columns={'ticker':[], 
              'name':[], 
              'sector':[], 
-             
+             'Date':[], 
+            'X_ssa_01':[], 'X_ssa_01_dir':[], 'X_ssa_01_slope':[],  'X_ssa_01_acceleration':[],
+            'MF_ssa_01':[], 'MF_ssa_01_dir':[], 'MF_ssa_01_slope':[], 'MF_ssa_01_acceleration':[], 
+            'OBV_ssa_01':[], 'OBV_ssa_01_dir':[], 'OBV_ssa_01_slope':[], 'OBV_ssa_01_acceleration':[],
+            
             'X_ssa_0':[], 'X_ssa_0_dir':[], 'X_ssa_0_slope':[],  'X_ssa_0_acceleration':[],
             'X_ssa_1':[], 'X_ssa_1_dir':[], 'X_ssa_1_slope':[], 
 
