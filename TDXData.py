@@ -6,7 +6,7 @@ import pandas as pd
 from datetime import datetime
 from os.path import exists
 def stock_csv(filepath,bars):
-  print('stock_csv', filepath)
+  
   data = []
   with open(filepath, 'rb') as f:
       #file_object_path = 'D:/Projects/PlutusPy/importexport/StockDir/' + name +'.csv'
@@ -64,7 +64,7 @@ def stock_csv(filepath,bars):
           #list= date_format.strftime('%Y-%M-%d')+","+str(stock_open[0]/100)+","+str(stock_high[0]/100.0)+","+str(stock_low[0]/100.0)+","+str(stock_close[0]/100.0)+","+str(stock_vol[0])+"\r\n"
           #list= date_format.strftime('%Y-%M-%d')+","+str(stock_high[0]/100.0)+","+str(stock_low[0]/100.0)+","+str(stock_open[0]/100)+","+str(stock_close[0]/100.0)+","+str(stock_vol[0]/100.0)+","+str(stock_amount[0])+"\r\n"
           #file_object.writelines(list)
-          stock_date=datetime.strptime(str(stock_date[0]), '%Y%M%d')
+          stock_date=datetime.strptime(str(stock_date[0]), '%Y%m%d')
           arr.append([stock_date,
                           stock_open[0]/100.,stock_high[0]/100.,stock_low[0]/100.,stock_close[0]/100.,stock_amount[0],stock_vol[0],stock_reservation[0]])
           #df.loc[stock_date] = [stock_date,
@@ -82,24 +82,30 @@ def stock_csv(filepath,bars):
   }
 
   df=pd.DataFrame(arr, columns=ssa_columns)
-  df.set_index('Date')
+  df.set_index('Date',inplace=True)
   df['vwap']=df['Amount']/df['Volume']
   df["id"]=np.arange(len(df))
+  
+  print('stock_csv', filepath, df.index[-1])
   return df
         #file_object.close()
 
 #stock_csv('D:/Apps/goldsun/vipdoc/sz/lday/sz002594.day', 'sz002594')
 
 paths=['D:/Apps/goldsun/vipdoc/sh/lday/','D:/Apps/goldsun/vipdoc/sz/lday/']
-def GetTDXData_v2(symbol, bars=500, interval='1d'):
+def GetTDXData_v2(symbol, bars=10, interval='1d'):
   for path in paths:
-    exchange=path[-8:-6]
+    #exchange=path[-8:-6]
+    if symbol[7:].lower()=='ss':
+      exchange='sh'
+    else:
+      exchange='sz'
     filename=path+exchange+symbol[:6]+'.day'
     if exists(filename):
       return stock_csv(filename,bars)
   return None
 if __name__ == '__main__':
   start=datetime.now()
-  GetTDXData_v2('159998.ss',500,'1d')
+  GetTDXData_v2('688599.ss',10,'1d')
   end=datetime.now()
   print(end-start)
