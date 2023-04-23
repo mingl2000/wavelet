@@ -131,14 +131,13 @@ def acceration(arr):
     else:
       return 'down-acc'
     
-def calculateSSA(symbol,ssa_df,df):
+def calculateSSA(symbol,ssa_df,df, window_size=13):
   #df=GetYahooData_v2(symbol, bars=500, interval='1d')
-  if df is not None:
+  if df is not None or len(df)<window_size:
     
     df['OBV']=talib.OBV(df['Close'], df['Volume'])
     df['Moneyflow']=talib.OBV(df['Close'], df['Volume']*df['Close'])
     # We decompose the time series into three subseries
-    window_size = 13
 
     #groups = [np.arange(i, i + 5) for i in range(0, 11, 5)]
 
@@ -175,19 +174,57 @@ def calculateSSA(symbol,ssa_df,df):
       ssa_df.loc[symbol] = [symbol,
                             name,
                             sector,
-                            df['Date'][-1:].to_numpy()[0],
-                            X_ssa[0][-1]+X_ssa[1][-1],upordown(X_ssa[0]+X_ssa[1]),slope(X_ssa[0]+X_ssa[1]),acceration(X_ssa[0]+X_ssa[1]),
-                            MF_ssa[0][-1]+MF_ssa[1][-1],upordown(MF_ssa[0]+MF_ssa[1][-1]),slope(MF_ssa[0]+MF_ssa[1][-1]), acceration(MF_ssa[0]+MF_ssa[1][-1]),
-                            OBV_ssa[0][-1]+OBV_ssa[1][-1],upordown(OBV_ssa[0]+OBV_ssa[1][-1]),slope(OBV_ssa[0]+OBV_ssa[1][-1]), acceration(OBV_ssa[0]+OBV_ssa[1][-1]),
-                            X_ssa[0][-1],upordown(X_ssa[0]),slope(X_ssa[0]),acceration(X_ssa[0]),
-                            X_ssa[1][-1],upordown(X_ssa[1]), slope(X_ssa[1]),
-                            MF_ssa[0][-1],upordown(MF_ssa[0]),slope(MF_ssa[0]), acceration(MF_ssa[0]),
-                            MF_ssa[1][-1],upordown(MF_ssa[1]),slope(MF_ssa[1]),
+                            df.index[-1],
+                            X_ssa[0][-1]+X_ssa[1][-1],
+                            upordown(X_ssa[0]+X_ssa[1]),
+                            slope(X_ssa[0]+X_ssa[1]),
+                            acceration(X_ssa[0]+X_ssa[1]),
+                            
+                            MF_ssa[0][-1]+MF_ssa[1][-1],
+                            upordown(MF_ssa[0]+MF_ssa[1][-1]),
+                            slope(MF_ssa[0]+MF_ssa[1][-1]), 
+                            acceration(MF_ssa[0]+MF_ssa[1][-1]),
+                            
+                            OBV_ssa[0][-1]+OBV_ssa[1][-1],
+                            upordown(OBV_ssa[0]+OBV_ssa[1][-1]),
+                            slope(OBV_ssa[0]+OBV_ssa[1][-1]), 
+                            acceration(OBV_ssa[0]+OBV_ssa[1][-1]),
+                            
+                            X_ssa[0][-1],
+                            upordown(X_ssa[0]),
+                            slope(X_ssa[0]),
+                            acceration(X_ssa[0]),
+                            
+                            X_ssa[1][-1],
+                            upordown(X_ssa[1]), 
+                            slope(X_ssa[1]),
+                            
+                            MF_ssa[0][-1],
+                            upordown(MF_ssa[0]),
+                            slope(MF_ssa[0]), 
+                            acceration(MF_ssa[0]),
+                            
+                            MF_ssa[1][-1],
+                            upordown(MF_ssa[1]),
+                            slope(MF_ssa[1]),
 
-                            OBV_ssa[0][-1],upordown(OBV_ssa[0]),slope(OBV_ssa[0]), acceration(OBV_ssa[0]),
-                            OBV_ssa[1][-1],upordown(OBV_ssa[1]),slope(OBV_ssa[1]),
-                            V_ssa[0][-1],upordown(V_ssa[0]),slope(V_ssa[0]),acceration(V_ssa[0]),
-                            V_ssa[1][-1],upordown(V_ssa[1]),slope(V_ssa[1]),
+                            OBV_ssa[0][-1],
+                            upordown(OBV_ssa[0]),
+                            slope(OBV_ssa[0]), 
+                            acceration(OBV_ssa[0]),
+
+                            OBV_ssa[1][-1],
+                            upordown(OBV_ssa[1]),
+                            slope(OBV_ssa[1]),
+                            
+                            V_ssa[0][-1],
+                            upordown(V_ssa[0]),
+                            slope(V_ssa[0]),
+                            acceration(V_ssa[0]),
+                            
+                            V_ssa[1][-1],
+                            upordown(V_ssa[1]),
+                            slope(V_ssa[1]),
                             
                             float(df['Close'][-1:]),
                             float(df['High'][-1:]),
@@ -223,7 +260,7 @@ if len(sys.argv) <2:
 if len(sys.argv) >=3:
   prefix=sys.argv[1]
 if len(sys.argv) <3:
-  symbols=['159998.ss']
+  symbols=['688599.ss']
 if len(sys.argv) >=3:
   if sys.argv[2]=='AllCN':
     symbols=getAllCNStockSymbols()
