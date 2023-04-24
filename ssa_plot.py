@@ -192,9 +192,9 @@ def plot_ssa(symbol, window_size=20):
   fig1,ax1=mpf.plot(df,type='candle',volume=False,volume_panel=2,addplot=apdict, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False)
   fontP = font_manager.FontProperties()
   fontP.set_family('SimHei')
-  fontP.set_size(14)
+  fontP.set_size(30)
 
-  fig1.suptitle(getTitle(symbol),fontsize=30,fontproperties=fontP)
+  fig1.suptitle(getTitle(symbol),fontproperties=fontP)
   
 
 
