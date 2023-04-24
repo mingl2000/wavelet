@@ -193,15 +193,15 @@ def plot_ssa(symbol, window_size=20):
   fontP = font_manager.FontProperties()
   fontP.set_family('SimHei')
   fontP.set_size(30)
-
-  fig1.suptitle(getTitle(symbol),fontproperties=fontP)
-  
+  title=getTitle(symbol)
+  fig1.suptitle(title,fontproperties=fontP)
+  fig1.canvas.manager.set_window_title(title)
 
 
 import sys
 window_size=20
 if len(sys.argv) <2:
-  symbols='002049.sz'
+  symbols='002049.sz,688599.sz'
 if len(sys.argv) >=2:
   symbols=sys.argv[1]
 if len(sys.argv) >=3:
