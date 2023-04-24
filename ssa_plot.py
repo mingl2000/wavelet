@@ -17,6 +17,7 @@ It is implemented as :class:`pyts.decomposition.SingularSpectrumAnalysis`.
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib
 from pyts.decomposition import SingularSpectrumAnalysis
 from numpy import pi
 import datetime
@@ -26,9 +27,35 @@ import pandas_datareader as pdr
 import pandas as pd
 import mplfinance as mpf
 import yfinance as yf
-
+import warnings
 from os.path import exists
 import yfinance as yf
+warnings.filterwarnings('ignore')
+#matplotlib.rc('font', family='Arial')
+from matplotlib import font_manager
+#fontP = font_manager.FontProperties()
+#fontP.set_family('SimHei')
+#plt.rcParams['font.sans-serif'] = ['SimHei']
+#matplotlib.rcParams['font.family'] = ['Heiti TC']
+def getStockNames():
+  df=pd.read_excel('CHINA_STOCKs2.xlsx', index_col=0)
+  df['ticker']=df.index
+  df['name']=df['名称']
+  df['sector']=df['细分行业']
+  return df
+
+def getStockName(stock_df, symbol):
+  try:
+    name=stock_df.loc[int(symbol[0:6]),'name']
+    sector=stock_df.loc[int(symbol[0:6]),'sector']
+    return (name,sector)
+  except:
+    return (symbol, 'NA')
+def getTitle(symbol):
+  stock_df=getStockNames()
+  title=symbol + ' ' +getStockName(stock_df,symbol)[0]+ ' ' +getStockName(stock_df,symbol)[1]
+  return title
+
 def GetYahooData(symbol, bars=500, interval='1d'):
   #start=datetime.date.today()-datetime.timedelta(days=days)
   #end=datetime.date.today()
@@ -82,7 +109,7 @@ def GetYahooData(symbol, bars=500, interval='1d'):
 
 #data = quandl.get('WIKI/%s' % instrument, start_date='2017-01-01', end_date='2012-02-10')
 
-def plot_ssa(symbol):
+def plot_ssa(symbol, window_size=20):
   df=GetYahooData(symbol, bars=500, interval='1d')
   closes = df['Adj Close'].rename('close')
   '''
@@ -110,7 +137,6 @@ def plot_ssa(symbol):
   X=[]
   X.append(closes)
   # We decompose the time series into three subseries
-  window_size = 20
 
   #groups = [np.arange(i, i + 5) for i in range(0, 11, 5)]
 
@@ -162,19 +188,27 @@ def plot_ssa(symbol):
         apdict.append(mpf.make_addplot(df[newcol], panel=1, width=width,secondary_y=False))
 
 
+  
   fig1,ax1=mpf.plot(df,type='candle',volume=False,volume_panel=2,addplot=apdict, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False)
-  fig1.suptitle(symbol,fontsize=30)
+  fontP = font_manager.FontProperties()
+  fontP.set_family('SimHei')
+  fontP.set_size(14)
+
+  fig1.suptitle(getTitle(symbol),fontsize=30,fontproperties=fontP)
   
 
 
 import sys
+window_size=20
 if len(sys.argv) <2:
-  symbols='QQQ,SPX,000001.ss,399001.sz'
+  symbols='002049.sz'
 if len(sys.argv) >=2:
   symbols=sys.argv[1]
+if len(sys.argv) >=3:
+  window_size=int(sys.argv[2])
 
 for symbol in symbols.split(','):
-  plot_ssa(symbol)
+  plot_ssa(symbol, window_size)
 plt.show()
 # The first subseries consists of the trend of the original time series.
 # The second and third subseries consist of noise.
