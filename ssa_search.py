@@ -132,7 +132,10 @@ def acceration(arr):
       return 'up-slowed'
     else:
       return 'down-acc'
-
+import pymannkendall as mk
+def calcuteMannKendall_trend(df, window_size):
+  result=mk.original_test(df['Close'].to_numpy()[-window_size:])
+  return result
 def calcuteTheilslopes(df, window_size):
   y=df['Close'].to_numpy()
   x=df['id'].to_numpy()
@@ -184,10 +187,13 @@ def calculateSSA(symbol,ssa_df,df, window_size=13):
       pass
     def add_ssa_df(symbol,df,X_ssa, V_ssa,ssa_df, OBV_ssa, MF_ssa,theilslopes):
       (name, sector)=getStockName(stock_df,symbol)
+      mktestresult=calcuteMannKendall_trend(df, window_size)
       ssa_df.loc[symbol] = [symbol,
                             name,
                             sector,
                             df.index[-1],
+                            mktestresult.trend,
+                            mktestresult.slope,
                             theilslopes[-2],
                             theilslopes[-2]/df['Close'][-2]*100,
                             X_ssa[0][-1]+X_ssa[1][-1],
@@ -288,6 +294,8 @@ ssa_columns={'ticker':[],
              'name':[], 
              'sector':[], 
              'Date':[], 
+             'mktest.trend':[],
+             'mktest.slope':[],
              'theilslopes':[],
              'theilslopesPercent':[],
             'X_ssa_01':[], 'X_ssa_01_dir':[], 'X_ssa_01_slope':[],  'X_ssa_01_acceleration':[],
