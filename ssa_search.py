@@ -33,6 +33,8 @@ import talib
 import warnings
 from YahooData import *
 from TDXData import *
+from scipy import stats
+
 warnings.filterwarnings('ignore')
 def getStockNames():
   df=pd.read_excel('CHINA_STOCKs2.xlsx', index_col=0)
@@ -130,7 +132,17 @@ def acceration(arr):
       return 'up-slowed'
     else:
       return 'down-acc'
-    
+
+def calcuteTheilslopes(df, window_size):
+  y=df['Close'].to_numpy()
+  x=df['id'].to_numpy()
+  slope=[]
+  for i in range(window_size-1):
+    slope.append(None)
+  for i in range(window_size-1, len(df)):
+    slope.append(stats.theilslopes(y[i:i+window_size], x[i:i+window_size], 0.90).slope)
+  #theilslopes=stats.theilslopes(y, x, 0.90)
+  return slope
 def calculateSSA(symbol,ssa_df,df, window_size=13):
   #df=GetYahooData_v2(symbol, bars=500, interval='1d')
   if df is not None or len(df)<window_size:
@@ -159,6 +171,7 @@ def calculateSSA(symbol,ssa_df,df, window_size=13):
     MF=[]
     MF.append(df['Moneyflow'])
     MF_ssa = ssa.fit_transform(MF)
+    theilslopes=calcuteTheilslopes(df, window_size)
 
 
 
@@ -169,12 +182,14 @@ def calculateSSA(symbol,ssa_df,df, window_size=13):
 
       print(fmt.format(symbol, X_ssa[0][-1],upordown(X_ssa[0]),slope(X_ssa[0]),acceration(X_ssa[0]), X_ssa[1][-1],upordown(X_ssa[1]), slope(X_ssa[1]), V_ssa[0][-1],upordown(V_ssa[0]),slope(V_ssa[0]), acceration(V_ssa[0]),V_ssa[1][-1],upordown(V_ssa[1]),slope(V_ssa[1]) ))
       pass
-    def add_ssa_df(symbol,df,X_ssa, V_ssa,ssa_df, OBV_ssa, MF_ssa):
+    def add_ssa_df(symbol,df,X_ssa, V_ssa,ssa_df, OBV_ssa, MF_ssa,theilslopes):
       (name, sector)=getStockName(stock_df,symbol)
       ssa_df.loc[symbol] = [symbol,
                             name,
                             sector,
                             df.index[-1],
+                            theilslopes[-2],
+                            theilslopes[-2]/df['Close'][-2]*100,
                             X_ssa[0][-1]+X_ssa[1][-1],
                             upordown(X_ssa[0]+X_ssa[1]),
                             slope(X_ssa[0]+X_ssa[1]),
@@ -240,7 +255,7 @@ def calculateSSA(symbol,ssa_df,df, window_size=13):
       #print(fmt.format(symbol, X_ssa[0][-1],upordown(X_ssa[0]),slope(X_ssa[0]),acceration(X_ssa[0]), X_ssa[1][-1],upordown(X_ssa[1]), slope(X_ssa[1]), V_ssa[0][-1],upordown(V_ssa[0]),slope(V_ssa[0]), acceration(V_ssa[0]),V_ssa[1][-1],upordown(V_ssa[1]),slope(V_ssa[1]) ))
     pass
     
-    ssa_df=add_ssa_df(symbol,df,X_ssa, V_ssa,ssa_df,OBV_ssa,MF_ssa)
+    ssa_df=add_ssa_df(symbol,df,X_ssa, V_ssa,ssa_df,OBV_ssa,MF_ssa,theilslopes)
     return ssa_df
 
 def getAllCNStockSymbols():
@@ -273,6 +288,8 @@ ssa_columns={'ticker':[],
              'name':[], 
              'sector':[], 
              'Date':[], 
+             'theilslopes':[],
+             'theilslopesPercent':[],
             'X_ssa_01':[], 'X_ssa_01_dir':[], 'X_ssa_01_slope':[],  'X_ssa_01_acceleration':[],
             'MF_ssa_01':[], 'MF_ssa_01_dir':[], 'MF_ssa_01_slope':[], 'MF_ssa_01_acceleration':[], 
             'OBV_ssa_01':[], 'OBV_ssa_01_dir':[], 'OBV_ssa_01_slope':[], 'OBV_ssa_01_acceleration':[],
