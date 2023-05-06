@@ -59,7 +59,8 @@ def getATR(df, ATR_period):
 from pyts.decomposition import SingularSpectrumAnalysis
 from numpy import pi
 
-def plot_gaussian_filter(df):
+def plot_gaussian_filter(df, figsize, pltstyle):
+  '''
   figsize=(26,13)
   mc = mpf.make_marketcolors(
                            volume='lightgray'
@@ -67,6 +68,14 @@ def plot_gaussian_filter(df):
 
                           
   s  = mpf.make_mpf_style(marketcolors=mc, gridaxis='both')
+  '''
+  df["gf2"]=gaussian_filter1d(x, 2)
+  df["gf3"]=gaussian_filter1d(x, 3)
+  df["gf5"]=gaussian_filter1d(x, 5)
+  df["gf8"]=gaussian_filter1d(x, 8)
+  df["gf13"]=gaussian_filter1d(x, 13)
+  df["gf21"]=gaussian_filter1d(x, 21)
+
   apdict = [
         mpf.make_addplot(df["gf2"], width=3, color='r',linestyle='dashdot'),
         mpf.make_addplot(df["gf3"], width=5, color='y',linestyle='dashdot'),
@@ -76,7 +85,7 @@ def plot_gaussian_filter(df):
         mpf.make_addplot(df['gf21']),
 ]
   fig1,ax1=mpf.plot(df,type='candle',volume=True,addplot=apdict, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False,title=ticker)
-  fig1.suptitle('gaussian filter')
+  fig1.suptitle('Gaussian Filter', fontsize=20)
 
 def plot_ssa_compare(df, symbol, window_sizes, showcomponents=False):
   if window_sizes ==None:
@@ -245,7 +254,7 @@ def plot_wt(df, colname, wavelet):
     return (fig, ax)
 
     
-def printwavelet(daysprint, df, wf_close, wf_high, wf_low, wf_vol,gf3,gf5):
+def printwavelet(daysprint, df, wf_close, wf_high, wf_low, wf_vol):
   def getdirection(arr,i):
     if round(arr[i],2)==round(arr[i-1],2):
       return "==  "
@@ -263,8 +272,8 @@ def printwavelet(daysprint, df, wf_close, wf_high, wf_low, wf_vol,gf3,gf5):
     else:
       return colored(data,'red')
 
-  print('day            Close           Wclose          Wclose1     high         low       volume     volume1  Gaussian F3  Gaussian F5')
-  fmt="{0:18}{1} * {2} {3:4}  {4} * {5} * {6}* {7}* {8} {9} {10}"
+  print('day            Close           Wclose          Wclose1     high         low       volume     volume1  ')
+  fmt="{0:18}{1} * {2} {3:4}  {4} * {5} * {6}* {7}* {8} "
   for i in range(daysprint,-1,-1):  
     closedir=getdirection(wf_close[0],-i-1)
     close1dir=getdirection(wf_close[1],-i-1)
@@ -281,9 +290,9 @@ def printwavelet(daysprint, df, wf_close, wf_high, wf_low, wf_vol,gf3,gf5):
       getcorloreddata(wf_high[0],-i-1),
       getcorloreddata(wf_low[0],-i-1),
       getcorloreddata(wf_vol[0],-i-1,0,"{0:11.0f}"),
-      getcorloreddata(wf_vol[1],-i-1,0,"{0:10.0f}"),
-      getcorloreddata( gf3,i), 
-      getcorloreddata(gf5,i)))
+      getcorloreddata(wf_vol[1],-i-1,0,"{0:10.0f}")))
+      #getcorloreddata( gf3,i), 
+      #getcorloreddata(gf5,i)))
 
 
 brick_size=0.1 # real brick_size will be brick_size*ATR(14)
@@ -324,20 +333,6 @@ df= GetTDXData_v2(ticker,historylen,interval)
 
 #x= df["Close"].to_numpy() 
 x=df['vwap'].to_numpy() 
-gf2 = gaussian_filter1d(x, 2)
-gf3 = gaussian_filter1d(x, 3)
-gf5 = gaussian_filter1d(x, 5)
-gf8 = gaussian_filter1d(x, 8)
-gf13 = gaussian_filter1d(x, 13)
-gf21 = gaussian_filter1d(x, 21)
-df["gf2"]=gf2
-df["gf3"]=gf3
-df["gf5"]=gf5
-df["gf8"]=gf8
-df["gf13"]=gf13
-df["gf21"]=gf21
-
-plot_gaussian_filter(df)
 
 brick_size=brick_size*getATR(df, 14)
 
@@ -365,7 +360,7 @@ df["coeff_vol"] =wf_vol[0]
 df["coeff_close_01"] = wf_close[0]+wf_close[1]
 df["coeff_vol_01"] = wf_vol[0]+wf_vol[1]
 
-printwavelet(daysprint, df,wf_close, wf_high, wf_low, wf_vol,gf3,gf5)
+printwavelet(daysprint, df,wf_close, wf_high, wf_low, wf_vol)
 '''
 print('day                  close         close1       high             high1         low               low1              volume                  volume1')
 fmt="{0:18}{1:8.2f} {2:4}{3:8.2f} {4:4} * {5:8.2f} {6:4} {7:8.2f} {8:4} * {9:8.2f} {8:4} {11:8.2f} {12:4} * {13:18,.0f} {14:4} {15:18,.0f} {16:4}"
@@ -411,7 +406,14 @@ for i in range(daysprint,-1,-1):
 if not drawchart:
   exit()
 figsize=(26,13)
+mc = mpf.make_marketcolors(
+                           volume='lightgray'
+                           )
 
+                          
+s  = mpf.make_mpf_style(marketcolors=mc, gridaxis='both')
+
+plot_gaussian_filter(df, figsize, s)
 
 df=df[-daystoplot:]
 for i in range(len(wf_close)):
@@ -422,12 +424,6 @@ for i in range(len(wf_close)):
   if 'vwap' in df.columns:
     wf_vwap[i]=wf_vwap[i][-daystoplot:]
 
-mc = mpf.make_marketcolors(
-                           volume='lightgray'
-                           )
-
-                          
-s  = mpf.make_mpf_style(marketcolors=mc, gridaxis='both')
 apdict = [
 #        mpf.make_addplot(df["gf3"], width=3, color='r',linestyle='dashdot'),
 #        mpf.make_addplot(df["gf5"], width=5, color='y',linestyle='dashdot'),
@@ -451,8 +447,8 @@ fig1.suptitle('wavelet')
 fig2,ax2=mpf.plot(df,type='candle',volume=True,addplot=apdict, figsize=figsize,tight_layout=True, panel_ratios=(1,1),style=s,returnfig=True,block=False,title=ticker)
 fig2.suptitle('wavelet')
 apdict = [
-        mpf.make_addplot(df["gf3"], width=3, color='r',linestyle='dashdot'),
-        mpf.make_addplot(df["gf5"], width=5, color='y',linestyle='dashdot'),
+        #mpf.make_addplot(df["gf3"], width=3, color='r',linestyle='dashdot'),
+        #mpf.make_addplot(df["gf5"], width=5, color='y',linestyle='dashdot'),
         mpf.make_addplot(df['coeff_close']),
         mpf.make_addplot(df['coeff_close_lt'], width=3, color='b'),
         mpf.make_addplot(df['coeff_high']),
@@ -467,7 +463,7 @@ apdict = [
         ]
 
 fig3,ax3=mpf.plot(df,type='candle',volume=False,addplot=apdict, figsize=figsize,tight_layout=True,returnfig=True,block=False,title=ticker)
-fig3.suptitle('gf (red and yellow) & wf (blue)')
+fig3.suptitle('wavelet')
 fig6,ax6=mpf.plot(df,type='renko',volume=False, figsize=figsize,tight_layout=True,returnfig=True,block=False, renko_params=dict(brick_size=brick_size),title=ticker)
 (fig5, ax5)=plot_wt(df, 'Volume', wf_vol)
 fig5.suptitle('plot_wt Volume')
