@@ -55,59 +55,28 @@ def getATR(df, ATR_period):
   return ATR(df["High"], df["Low"], df["Close"], ATR_period)[-1]
 
 # In[3]:
-'''
-def GetYahooData(symbol, bars=500, interval='1d'):
-  #start=datetime.date.today()-datetime.timedelta(days=days)
-  #end=datetime.date.today()
-  if symbol=='SPX':
-    symbol='^GSPC'
-  #df=.gepdrt_data_yahoo(symbols=symbol,  start=start, end=end,interval=interval)
-  
-  #if interval.endswith('m') or interval.endswith('h'):
-  #  period='max'
-  
-  if interval.endswith('1m'):
-    period='7d'
-  elif  interval.endswith('m'):
-    period='60d'
-  elif  interval.endswith('h') or interval.endswith('d'):
-    period='730d'
-  else:
-    period='max'
-  
-  #elif interval.endswith('d'):
-    #period=str(days)+'d'
-  #  period='max'
-  #elif  interval.endswith('w'):
-  #  period=str(days)+'wk'
-  
-  dataFileName="data/"+symbol+'_' +period+'_'+ interval +".csv"
-  dataFileName1="data/"+symbol+'_' +'max'+'_'+ interval +".csv"
-  if interval.endswith(('d','D')) and datetime.datetime.now().hour>=13 and (exists(dataFileName) or exists(dataFileName1)):
-    print('read yahoo data from cache')
-    df=pd.read_csv(dataFileName, header=0, index_col=0, encoding='utf-8', parse_dates=True)
-    #df.index=df["Date"]
-  else:
-    print('read yahoo data from web')
-    df = yf.download(tickers=symbol, period=period, interval=interval)
-    df.to_csv(dataFileName, index=True, date_format='%Y-%m-%d %H:%M:%S')
-  #dataFileName="data/"+symbol+".csv"
-  
-  #df = pd.read_csv(dataFileName,index_col=0,parse_dates=True)
-  #df.shape
-  df.dropna(inplace = True)
-  df =df [-bars:]
-  df.head(3)
-  df.tail(3)
-  df["id"]=np.arange(len(df))
-  #df["date1"]=df.index.astype(str)
-  #df["datefmt"]=df.index.strftime('%m/%d/%Y')
-  
-  return df
-'''
 #SSA_compare
 from pyts.decomposition import SingularSpectrumAnalysis
 from numpy import pi
+
+def plot_gaussian_filter(df):
+  figsize=(26,13)
+  mc = mpf.make_marketcolors(
+                           volume='lightgray'
+                           )
+
+                          
+  s  = mpf.make_mpf_style(marketcolors=mc, gridaxis='both')
+  apdict = [
+        mpf.make_addplot(df["gf2"], width=3, color='r',linestyle='dashdot'),
+        mpf.make_addplot(df["gf3"], width=5, color='y',linestyle='dashdot'),
+        mpf.make_addplot(df['gf5']),
+        mpf.make_addplot(df['gf8'], width=3, color='b'),
+        mpf.make_addplot(df['gf13']),
+        mpf.make_addplot(df['gf21']),
+]
+  fig1,ax1=mpf.plot(df,type='candle',volume=True,addplot=apdict, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False,title=ticker)
+  fig1.suptitle('gaussian filter')
 
 def plot_ssa_compare(df, symbol, window_sizes, showcomponents=False):
   if window_sizes ==None:
@@ -124,28 +93,6 @@ def plot_ssa_compare(df, symbol, window_sizes, showcomponents=False):
   #df=GetYahooData(symbol, bars=bars, interval='1d')
   #closes = df['Adj Close'].rename('close')
   closes = df['Close']
-  '''
-  N=20
-  t = np.arange(0,N)
-
-  trend = 0.001 * (t - 100)**2
-
-  p1, p2 = 20, 30
-
-  periodic1 = 2 * np.sin(2*pi*t/p1)
-  periodic2 = 0.75 * np.sin(2*pi*t/p2)
-
-  np.random.seed(123) # So we generate the same noisy time series every time.
-  noise = 2 * (np.random.rand(N) - 0.5)
-  F = trend + periodic1 + periodic2 + noise
-
-  # Parameters
-  n_samples, n_timestamps = 1000, 10
-
-  # Toy dataset
-  rng = np.random.RandomState(41)
-  X = rng.randn(n_samples, n_timestamps)
-  '''
   X=[]
   X.append(closes)
 
@@ -389,6 +336,9 @@ df["gf5"]=gf5
 df["gf8"]=gf8
 df["gf13"]=gf13
 df["gf21"]=gf21
+
+plot_gaussian_filter(df)
+
 brick_size=brick_size*getATR(df, 14)
 
 # import data
@@ -517,7 +467,7 @@ apdict = [
         ]
 
 fig3,ax3=mpf.plot(df,type='candle',volume=False,addplot=apdict, figsize=figsize,tight_layout=True,returnfig=True,block=False,title=ticker)
-fig3.suptitle('gf & wf')
+fig3.suptitle('gf (red and yellow) & wf (blue)')
 fig6,ax6=mpf.plot(df,type='renko',volume=False, figsize=figsize,tight_layout=True,returnfig=True,block=False, renko_params=dict(brick_size=brick_size),title=ticker)
 (fig5, ax5)=plot_wt(df, 'Volume', wf_vol)
 fig5.suptitle('plot_wt Volume')
