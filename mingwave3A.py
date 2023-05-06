@@ -137,7 +137,8 @@ def threshold_coeffs(coeffs, threshold):
     return pywt.threshold(coeffs, threshold, mode='soft')
 
 def WT_WaveletPacket(df, wavefunc='db4',plot=False):
-  wp = pywt.WaveletPacket(data=df['Close'], wavelet=wavefunc, mode='symmetric')
+  data=df['Close']
+  wp = pywt.WaveletPacket(data, wavelet=wavefunc, mode='symmetric')
   
   print(wp['ad'].maxlevel)
   print([node.path for node in wp.get_level(wp['ad'].maxlevel, 'natural')])
