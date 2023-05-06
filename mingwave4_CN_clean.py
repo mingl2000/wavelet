@@ -282,7 +282,7 @@ def printwavelet(daysprint, df, wf_close, wf_high, wf_low, wf_vol):
 brick_size=0.1 # real brick_size will be brick_size*ATR(14)
 drawchart=True
 historylen=512
-interval='1wk'
+interval='1d'
 daysprint=89
 usecache=True
 daystoplot=512
@@ -312,11 +312,11 @@ if len(sys.argv) >=9:
 
 
 #ticker="SPX"
-#df= GetYahooData_v2(ticker,historylen,interval)
-df= GetTDXData_v2(ticker,historylen,interval)
+df= GetYahooData_v2(ticker,historylen,interval)
+#df= GetTDXData_v2(ticker,historylen,interval)
 
-#x= df["Close"].to_numpy() 
-x=df['vwap'].to_numpy() 
+x= df["Close"].to_numpy() 
+#x=df['vwap'].to_numpy() 
 
 brick_size=brick_size*getATR(df, 14)
 
