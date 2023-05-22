@@ -101,3 +101,26 @@ def GetYahooData_v2(symbol, bars=500, interval='1d'):
   #df["datefmt"]=df.index.strftime('%m/%d/%Y')
   
   return df
+import sys
+from datetime import *
+if __name__ == '__main__':
+  if len(sys.argv) >=2:
+    ticker=sys.argv[1]
+  else:
+    ticker='QQQ'
+
+  print('ticker=',ticker)
+
+  if len(sys.argv) >=3:
+    historylen=int(sys.argv[2])
+  else:
+    historylen=500
+  if len(sys.argv) >=4:
+    interval=sys.argv[3]
+  else:
+    interval='1d'
+
+  start=datetime.now()
+  df=GetYahooData_v2(ticker,historylen,interval)
+  end=datetime.now()
+  print('ticker=',ticker, 'len=', len(df), 'speed=',end-start)
