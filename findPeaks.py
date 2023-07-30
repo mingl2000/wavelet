@@ -129,9 +129,9 @@ def findpeaksImp(df, sigmas=1):
     highPeaks, _highProperties= find_peaks(highdata, prominence=[highProminenceThreashold,None])
     lowPeaks, _lowProperties= find_peaks(-1*lowdata, prominence=[lowProminenceThreashold,None])
     nonePeaks=[]
-    if highdata[-1]>highdata[highPeaks[-1]]:
+    if highdata[-1]>lowdata[lowPeaks[-1]]:
       highPeaks=np.append(highPeaks, len(highdata)-1)
-    elif lowdata[-1]<lowdata[lowPeaks[-1]]:
+    elif lowdata[-1]<highdata[highPeaks[-1]]:
       lowPeaks=np.append(lowPeaks, len(lowdata)-1)
     else:
 
