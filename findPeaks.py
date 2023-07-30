@@ -33,6 +33,22 @@ def pltdf(df, highPeaks, lowPeaks):
     df.iat[i,8]=df.iloc[i].Low
 
   peaks=mergePeaks(df,highPeaks,lowPeaks)
+  ''' add the last data point'''
+  nonePeaks=[]
+  if peaks[-1][2]=='high' and df['High'][-1]>peaks[-1][1]:
+    peaks[-1]=[len(df)-1, df['High'][-1],'high']
+  elif peaks[-1][2]=='low' and df['Low'][-1]<peaks[-1][1]:
+    peaks[-1]=[len(df)-1, df['Low'][-1],'low']
+  elif peaks[-1][2]=='low' and df['High'][-1]>peaks[-1][1]:
+    #peaks=np.append(peaks, [len(df)-1, df['High'][-1],'high'])
+    peaks.append([len(df)-1, df['High'][-1],'high'])
+    #pass
+  elif peaks[-1][2]=='high' and df['Low'][-1]<peaks[-1][1]:
+    peaks.append([len(df)-1, df['Low'][-1],'low'])
+    #peaks=np.append(peaks, [len(df)-1, df['Low'][-1],'low'])
+    #pass
+  else:
+    nonePeaks.append(len(df)-1)
 
   '''
   apdHigh = mpf.make_addplot(df['highPeaks'],type='scatter',markersize=200,marker='^')
@@ -60,9 +76,6 @@ def pltdf(df, highPeaks, lowPeaks):
   
   ax1[0].plot(peaksX,peaksY, color='b')
   
-  nonePeaks=[]
-  if peaksX[-1]!=len(df)-1:
-    nonePeaks.append(len(df)-1)
   if len(nonePeaks)>0:
     peaksX=[]
     peaksY=[]
@@ -146,15 +159,16 @@ def findpeaksImp(df, sigmas=1):
     return peaks,highPeaks, lowPeaks, nonePeaks
 import sys
 def main(ticker):
-  '''
+  
   df=getYahooData_v1(ticker,  '5m' )
   peaks,highPeaks, lowPeaks, nonePeaks=findpeaksImp(df,1)
+  
   df=getYahooData_v1(ticker,  '30m')
   peaks,highPeaks, lowPeaks, nonePeaks=findpeaksImp(df,1)
-  '''
+  
   df=getYahooData_v1(ticker,  '1d')
   peaks,highPeaks, lowPeaks, nonePeaks=findpeaksImp(df,1)
-
+  
   plt.show()
 
 if __name__ =="__main__":
