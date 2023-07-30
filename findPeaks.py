@@ -7,7 +7,7 @@ from scipy.signal import peak_prominences
 import mplfinance as mpf
 #x = electrocardiogram()[2000:4000]
 
-def pltdf(df, highPeaks, lowPeaks,nonePeaks):
+def pltdf(df, highPeaks, lowPeaks):
   figsize=(26,13)
   mc = mpf.make_marketcolors(
                             volume='lightgray'
@@ -59,6 +59,10 @@ def pltdf(df, highPeaks, lowPeaks,nonePeaks):
   
   
   ax1[0].plot(peaksX,peaksY, color='b')
+  
+  nonePeaks=[]
+  if peaksX[-1]!=len(df)-1:
+    nonePeaks.append(len(df)-1)
   if len(nonePeaks)>0:
     peaksX=[]
     peaksY=[]
@@ -69,7 +73,7 @@ def pltdf(df, highPeaks, lowPeaks,nonePeaks):
     peaksY.append(df['Close'][nonePeaks[0]])
     ax1[0].plot(peaksX,peaksY, color='y')
 
-  return highPeaks, lowPeaks, nonePeaks
+  return peaks,highPeaks, lowPeaks, nonePeaks
 
 def mergePeaks(df,highPeaks,lowPeaks):
   #highPeakParis=zip(highPeaks, [highPeaks, df.iloc[highPeaks].highPeaks.to_numpy(),'high'])
@@ -128,6 +132,7 @@ def findpeaksImp(df, sigmas=1):
     #plt.show()
     highPeaks, _highProperties= find_peaks(highdata, prominence=[highProminenceThreashold,None])
     lowPeaks, _lowProperties= find_peaks(-1*lowdata, prominence=[lowProminenceThreashold,None])
+    '''
     nonePeaks=[]
     if highdata[-1]>lowdata[lowPeaks[-1]]:
       highPeaks=np.append(highPeaks, len(highdata)-1)
@@ -136,26 +141,27 @@ def findpeaksImp(df, sigmas=1):
     else:
 
       nonePeaks.append(len(lowdata)-1)
-
-    highPeaks,lowPeaks, nonePeaks=pltdf(df,highPeaks,lowPeaks, nonePeaks)
-    return highPeaks, lowPeaks, nonePeaks
+    '''
+    peaks,highPeaks,lowPeaks, nonePeaks=pltdf(df,highPeaks,lowPeaks)
+    return peaks,highPeaks, lowPeaks, nonePeaks
 import sys
 def main(ticker):
-
+  '''
   df=getYahooData_v1(ticker,  '5m' )
-  highPeaks, lowPeaks, nonePeaks=findpeaksImp(df,1)
+  peaks,highPeaks, lowPeaks, nonePeaks=findpeaksImp(df,1)
   df=getYahooData_v1(ticker,  '30m')
-  highPeaks, lowPeaks, nonePeaks=findpeaksImp(df,1)
+  peaks,highPeaks, lowPeaks, nonePeaks=findpeaksImp(df,1)
+  '''
   df=getYahooData_v1(ticker,  '1d')
-  highPeaks, lowPeaks, nonePeaks=findpeaksImp(df,1)
+  peaks,highPeaks, lowPeaks, nonePeaks=findpeaksImp(df,1)
 
   plt.show()
 
 if __name__ =="__main__":
-  if len(sys.argv)>0:
+  if len(sys.argv)>1:
     ticker=sys.argv[1]
   else:
-    ticker='000001.ss'  
+    ticker='399001.sz'  
   print(ticker)
 
   main(ticker)
