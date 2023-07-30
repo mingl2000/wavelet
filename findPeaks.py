@@ -69,7 +69,7 @@ def pltdf(df, highPeaks, lowPeaks,nonePeaks):
     peaksY.append(df['Close'][nonePeaks[0]])
     ax1[0].plot(peaksX,peaksY, color='y')
 
-  return df
+  return highPeaks, lowPeaks, nonePeaks
 
 def mergePeaks(df,highPeaks,lowPeaks):
   #highPeakParis=zip(highPeaks, [highPeaks, df.iloc[highPeaks].highPeaks.to_numpy(),'high'])
@@ -137,15 +137,26 @@ def findpeaksImp(df, sigmas=1):
 
       nonePeaks.append(len(lowdata)-1)
 
-    df=pltdf(df,highPeaks,lowPeaks, nonePeaks)
-    
-    
-interval='5m'
-ticker='000948.sz'
-df=getYahooData_v1(ticker,  interval )
-findpeaksImp(df,1)
-plt.show()
+    highPeaks,lowPeaks, nonePeaks=pltdf(df,highPeaks,lowPeaks, nonePeaks)
+    return highPeaks, lowPeaks, nonePeaks
+import sys
+def main(args):
+  if len(args)>0:
+    ticker=args[1]
+  else:
+    ticker='000001.ss'  
+  print(ticker)
 
+  df=getYahooData_v1(ticker,  '5m' )
+  highPeaks, lowPeaks, nonePeaks=findpeaksImp(df,1)
+  df=getYahooData_v1(ticker,  '30m')
+  highPeaks, lowPeaks, nonePeaks=findpeaksImp(df,1)
+  df=getYahooData_v1(ticker,  '1d')
+  highPeaks, lowPeaks, nonePeaks=findpeaksImp(df,1)
 
+  plt.show()
+
+if __name__ =="__main__":
+  main(sys.argv)
 
 
