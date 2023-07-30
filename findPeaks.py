@@ -140,12 +140,7 @@ def findpeaksImp(df, sigmas=1):
     highPeaks,lowPeaks, nonePeaks=pltdf(df,highPeaks,lowPeaks, nonePeaks)
     return highPeaks, lowPeaks, nonePeaks
 import sys
-def main(args):
-  if len(args)>0:
-    ticker=args[1]
-  else:
-    ticker='000001.ss'  
-  print(ticker)
+def main(ticker):
 
   df=getYahooData_v1(ticker,  '5m' )
   highPeaks, lowPeaks, nonePeaks=findpeaksImp(df,1)
@@ -157,6 +152,12 @@ def main(args):
   plt.show()
 
 if __name__ =="__main__":
-  main(sys.argv)
+  if len(sys.argv)>0:
+    ticker=sys.argv[1]
+  else:
+    ticker='000001.ss'  
+  print(ticker)
+
+  main(ticker)
 
 
