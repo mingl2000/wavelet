@@ -85,8 +85,57 @@ def pltdf(df, highPeaks, lowPeaks):
     peaksX.append(nonePeaks[0])
     peaksY.append(df['Close'][nonePeaks[0]])
     ax1[0].plot(peaksX,peaksY, color='y')
+  
+  zhongsus=find_zhongsus(peaks)
+  
+  for low, high, left, right in zhongsus:
+    peaksX=[]
+    peaksY=[]
+
+    peaksX.append(left)
+    peaksY.append(low)
+    
+    peaksX.append(left)
+    peaksY.append(high)
+
+    peaksX.append(right)
+    peaksY.append(high)
+
+    peaksX.append(right)
+    peaksY.append(low)
+    peaksX.append(left)
+    peaksY.append(low)
+    ax1[0].plot(peaksX,peaksY, color='r')
+  
 
   return peaks,highPeaks, lowPeaks, nonePeaks
+def between(a, low, high):
+  return a>=low and a<=high
+
+def find_zhongsus(peaks):
+  zhongsus=[]
+
+  for i in range(3, len(peaks)):
+    curline=[min(peaks[i-1], peaks[i-0]), max(peaks[i-1], peaks[i-0])]
+    if len(zhongsus)>0:
+      lastzu=zhongsus[-1]
+      if between(curline[0][1], lastzu[0],lastzu[1]) or between(curline[1][1], lastzu[0],lastzu[1]):
+        lastzu[3]=peaks[i-0][0]
+        continue
+    line1=[min(peaks[i-3][1], peaks[i-2][1]), max(peaks[i-3][1], peaks[i-2][1])]
+    line2=[min(peaks[i-2][1], peaks[i-1][1]), max(peaks[i-2][1], peaks[i-1][1])]
+    line3=[min(peaks[i-1][1], peaks[i-0][1]), max(peaks[i-1][1], peaks[i-0][1])]
+    dd=min(line1[0], line2[0], line3[0])
+    gg=max(line1[1], line2[1], line3[1])
+    if dd<gg:
+      zu=[dd, gg, peaks[i-3][0],peaks[i-0][0]]
+      zhongsus.append(zu)
+
+  return zhongsus
+
+    
+    
+
 
 def mergePeaks(df,highPeaks,lowPeaks):
   #highPeakParis=zip(highPeaks, [highPeaks, df.iloc[highPeaks].highPeaks.to_numpy(),'high'])
@@ -157,18 +206,21 @@ def findpeaksImp(df, sigmas=1):
     '''
     peaks,highPeaks,lowPeaks, nonePeaks=pltdf(df,highPeaks,lowPeaks)
     return peaks,highPeaks, lowPeaks, nonePeaks
+
+
+
 import sys
 def main(ticker):
-  
+  '''
   df=getYahooData_v1(ticker,  '5m' )
   peaks,highPeaks, lowPeaks, nonePeaks=findpeaksImp(df,1)
-  
+  '''
   df=getYahooData_v1(ticker,  '30m')
   peaks,highPeaks, lowPeaks, nonePeaks=findpeaksImp(df,1)
-  
+  '''
   df=getYahooData_v1(ticker,  '1d')
   peaks,highPeaks, lowPeaks, nonePeaks=findpeaksImp(df,1)
-  
+  '''
   plt.show()
 
 if __name__ =="__main__":
