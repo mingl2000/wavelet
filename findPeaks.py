@@ -125,8 +125,8 @@ def find_zhongsus(peaks):
     line1=[min(peaks[i-3][1], peaks[i-2][1]), max(peaks[i-3][1], peaks[i-2][1])]
     line2=[min(peaks[i-2][1], peaks[i-1][1]), max(peaks[i-2][1], peaks[i-1][1])]
     line3=[min(peaks[i-1][1], peaks[i-0][1]), max(peaks[i-1][1], peaks[i-0][1])]
-    dd=min(line1[0], line2[0], line3[0])
-    gg=max(line1[1], line2[1], line3[1])
+    dd=max(line1[0], line2[0], line3[0])
+    gg=min(line1[1], line2[1], line3[1])
     if dd<gg:
       zu=[dd, gg, peaks[i-3][0],peaks[i-0][0]]
       zhongsus.append(zu)
