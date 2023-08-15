@@ -7,7 +7,7 @@ from scipy.signal import peak_prominences
 import mplfinance as mpf
 #x = electrocardiogram()[2000:4000]
 
-def pltdf(df, highPeaks, lowPeaks):
+def pltdf(df, highPeaks, lowPeaks,errorInPercent):
   figsize=(26,13)
   mc = mpf.make_marketcolors(
                             volume='lightgray'
@@ -86,7 +86,7 @@ def pltdf(df, highPeaks, lowPeaks):
     peaksY.append(df['Close'][nonePeaks[0]])
     ax1[0].plot(peaksX,peaksY, color='y')
   
-  zhongsus=find_zhongsus(peaks)
+  zhongsus=find_zhongsus(peaks, errorInPercent)
   
   for low, high, left, right, expandable in zhongsus:
     peaksX=[]
@@ -111,8 +111,20 @@ def pltdf(df, highPeaks, lowPeaks):
   return peaks,highPeaks, lowPeaks, nonePeaks
 def between(a, low, high):
   return a>=low and a<=high
+#import math
+def isclose(a, b, minvalue, maxvalue, errorInPercent):
+  return abs(a/b-1)<=abs((maxvalue-minvalue))*errorInPercent/100
+  
+def isPartOfZhongSus(zu, zhongsus,errorInPercent):
+  for zuTemp in zhongsus:
+    #if zu[0]==zuTemp[0] and zu[1]==zuTemp[1]:
+    #and zu[3]>=zuTemp[3] and  zu[4]<=zuTemp[4]:
+    if isclose(zu[0], zuTemp[0], zuTemp[0], zuTemp[1], errorInPercent) and isclose(zu[1], zuTemp[1], zuTemp[0], zuTemp[1], errorInPercent):
+      return True
+    
+  return False
 
-def find_zhongsus(peaks):
+def find_zhongsus(peaks, errorInPercent):
   zhongsus=[]
 
   for i in range(3, len(peaks)):
@@ -129,9 +141,10 @@ def find_zhongsus(peaks):
     line3=[min(peaks[i-1][1], peaks[i-0][1]), max(peaks[i-1][1], peaks[i-0][1])]
     dd=max(line1[0], line2[0], line3[0])
     gg=min(line1[1], line2[1], line3[1])
-    if dd<gg:
+    if dd<gg:      
       zu=[dd, gg, peaks[i-3][0],peaks[i-0][0], True]  # True: open to add expand
-      zhongsus.append(zu)
+      if not isPartOfZhongSus(zu, zhongsus, errorInPercent):
+        zhongsus.append(zu)
 
   return zhongsus
 
@@ -178,7 +191,7 @@ def mergePeaks(df,highPeaks,lowPeaks):
 
 from statistics import stdev
 from statistics import mean
-def findpeaksImp(df, sigmas=1):
+def findpeaksImp(df, sigmas=1,errorInPercent=1):
     highdata=df['High'].to_numpy()
     lowdata=df['High'].to_numpy()
     #highPeaks, _highProperties = find_peaks(highdata, height=0,distance=5)
@@ -206,7 +219,7 @@ def findpeaksImp(df, sigmas=1):
 
       nonePeaks.append(len(lowdata)-1)
     '''
-    peaks,highPeaks,lowPeaks, nonePeaks=pltdf(df,highPeaks,lowPeaks)
+    peaks,highPeaks,lowPeaks, nonePeaks=pltdf(df,highPeaks,lowPeaks,errorInPercent)
     return peaks,highPeaks, lowPeaks, nonePeaks
 
 
@@ -218,7 +231,7 @@ def main(ticker):
   peaks,highPeaks, lowPeaks, nonePeaks=findpeaksImp(df,1)
   '''
   df=getYahooData_v1(ticker,  '30m')
-  peaks,highPeaks, lowPeaks, nonePeaks=findpeaksImp(df,1)
+  peaks,highPeaks, lowPeaks, nonePeaks=findpeaksImp(df,1,0.1)
   '''
   df=getYahooData_v1(ticker,  '1d')
   peaks,highPeaks, lowPeaks, nonePeaks=findpeaksImp(df,1)
