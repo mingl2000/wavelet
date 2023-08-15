@@ -88,7 +88,7 @@ def pltdf(df, highPeaks, lowPeaks):
   
   zhongsus=find_zhongsus(peaks)
   
-  for low, high, left, right in zhongsus:
+  for low, high, left, right, expandable in zhongsus:
     peaksX=[]
     peaksY=[]
 
@@ -119,16 +119,18 @@ def find_zhongsus(peaks):
     curline=[min(peaks[i-1], peaks[i-0]), max(peaks[i-1], peaks[i-0])]
     if len(zhongsus)>0:
       lastzu=zhongsus[-1]
-      if between(curline[0][1], lastzu[0],lastzu[1]) or between(curline[1][1], lastzu[0],lastzu[1]):
+      if lastzu[4] and between(curline[0][1], lastzu[0],lastzu[1]) or between(curline[1][1], lastzu[0],lastzu[1]):
         lastzu[3]=peaks[i-0][0]
         continue
+      else:
+        lastzu[4]=False
     line1=[min(peaks[i-3][1], peaks[i-2][1]), max(peaks[i-3][1], peaks[i-2][1])]
     line2=[min(peaks[i-2][1], peaks[i-1][1]), max(peaks[i-2][1], peaks[i-1][1])]
     line3=[min(peaks[i-1][1], peaks[i-0][1]), max(peaks[i-1][1], peaks[i-0][1])]
     dd=max(line1[0], line2[0], line3[0])
     gg=min(line1[1], line2[1], line3[1])
     if dd<gg:
-      zu=[dd, gg, peaks[i-3][0],peaks[i-0][0]]
+      zu=[dd, gg, peaks[i-3][0],peaks[i-0][0], True]  # True: open to add expand
       zhongsus.append(zu)
 
   return zhongsus
@@ -227,7 +229,7 @@ if __name__ =="__main__":
   if len(sys.argv)>1:
     ticker=sys.argv[1]
   else:
-    ticker='399001.sz'  
+    ticker='000001.ss'  
   print(ticker)
 
   main(ticker)
