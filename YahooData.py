@@ -3,13 +3,14 @@ import numpy as np
 from os.path import exists
 import datetime
 import pandas as pd
+import sys
 def get1mYahooData(ticker):
     data=[]
     
 
     tick = yf.Ticker(ticker)
     df = tick.history(period='7d', interval='1m')
-    
+    #df=df.loc[(df.index.hour*60+data.index.minute)<=690 | (df.index.hour>12)]
     data.append(df)
 
 
@@ -51,6 +52,8 @@ def getYahooData_v1(ticker, interval='1m'):
       df=pd.read_csv(dataFileName, header=0, index_col=0, encoding='utf-8', parse_dates=True)
     else:
       df = yf.download(tickers=ticker, period=period, interval=interval)
+    
+    #df=df.loc[(df.index.hour*60+df.index.minute)<=690 | (df.index.hour>12)]
     return df
 def GetYahooData_v2(symbol, bars=500, interval='1d'):
   #start=datetime.date.today()-datetime.timedelta(days=days)
@@ -101,8 +104,6 @@ def GetYahooData_v2(symbol, bars=500, interval='1d'):
   #df["datefmt"]=df.index.strftime('%m/%d/%Y')
   
   return df
-import sys
-from datetime import *
 if __name__ == '__main__':
   if len(sys.argv) >=2:
     ticker=sys.argv[1]
@@ -119,7 +120,7 @@ if __name__ == '__main__':
     interval=sys.argv[3]
   else:
     interval='1d'
-
+  from datetime import *
   start=datetime.now()
   df=GetYahooData_v2(ticker,historylen,interval)
   end=datetime.now()

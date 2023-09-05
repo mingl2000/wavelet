@@ -18,6 +18,11 @@ def dfplot(ticker, name, df,colnames):
   apdict = []
   for colname in colnames:
       apdict.append(mpf.make_addplot(df[colname], secondary_y=False,panel=0,width=3))
+  df['KFDiff_close']=df['Close_Filtered']-df['Close_Smoothed']
+  if 'vwap' in df.columns:
+    df['KFDiff_vwap']=df['vwap_Filtered']-df['vwap_Smoothed']
+  
+
   def getTitle(ticker, name):
     title="KalmanFilter-"+ticker
     if name is not None:
@@ -25,7 +30,11 @@ def dfplot(ticker, name, df,colnames):
     return title
   fig1,ax1=mpf.plot(df,type='candle',volume=True,volume_panel=1,addplot=apdict, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False, title=ticker,panel_ratios=(3,1))
   fig1.suptitle(getTitle(ticker,name),fontsize=30)
+  apdict.append(mpf.make_addplot(df['KFDiff_close'], secondary_y=False,panel=1,width=3))
+  if 'vwap' in df.columns:
+    apdict.append(mpf.make_addplot(df['KFDiff_vwap'], secondary_y=False,panel=1,width=3))
   fig2,ax2=mpf.plot(df,type='candle',volume=False,volume_panel=1,addplot=apdict, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False, title=ticker)
+  
   fig2.suptitle(getTitle(ticker,name),fontsize=30)
 
 def KalmanFilterPlot(ticker, historylen, interval):
@@ -48,6 +57,39 @@ def KalmanFilterPlot(ticker, historylen, interval):
   data['Filtered']=state_means
   data['Smoothed']=state_means_smooth
   dfplot(ticker, None, data, ['Filtered','Smoothed'])
+  print (state_means_smooth[-1]-state_means[-1])
+  plt.show()
+
+def calculateKalmanFilter(df, colname):
+  kf = KalmanFilter(
+      initial_state_mean=df[colname][0],
+      initial_state_covariance=1,
+      observation_covariance=1,
+      transition_covariance=0.01
+  )
+
+  # Run Kalman filter on stock data
+  state_means, _ = kf.filter(df[colname].values)
+
+  # Apply RTS smoothing algorithm
+  state_means_smooth, _ = kf.smooth(df[colname].values)
+
+  #plt.show()
+  df[colname+'_Filtered']=state_means
+  df[colname+'_Smoothed']=state_means_smooth
+  return df
+
+
+def KalmanFilterPlot2(ticker,df):
+  #data= GetYahooData_v2(ticker,historylen,interval)
+  # Define Kalman filter parameters
+  df=calculateKalmanFilter(df,'Close')
+  if 'vwap' in df.columns:
+    df=calculateKalmanFilter(df,'vwap')
+    dfplot(ticker, None, df, ['Close_Filtered','Close_Smoothed','vwap_Filtered','vwap_Smoothed'])
+  else:
+    dfplot(ticker, None, df, ['Close_Filtered','Close_Smoothed'])
+  #print (state_means_smooth[-1]-state_means_close[-1])
   plt.show()
 
 # Load stock data
@@ -87,6 +129,7 @@ def main():
 #ticker="SPX"
   
   KalmanFilterPlot(ticker, historylen, interval)
+  #KalmanFilterPlot2(ticker,df)
 '''
 ticker = 'AAPL'
 start_date = '2010-01-01'

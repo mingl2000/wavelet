@@ -8,7 +8,14 @@ import mplfinance as mpf
 from YahooData import *
 import sys
 import statsmodels.api as sm
+
 import copy
+
+def CalRateChange(df):
+  df['ROC']=0
+  for i in range(1,len(df)):
+    df['ROC'].iloc[i]=df['Close'].iloc[i]/df['Close'].iloc[i-1]*100.0-100.0
+  return df
 def DoMarkovRegression(df, col1, col2):
   #build and train the MSDR model
   msdr_model = sm.tsa.MarkovRegression(endog=df[col1], k_regimes=2,
@@ -33,10 +40,14 @@ def dfplot(ticker, name, df,colnames1,colnames2):
                             
   s  = mpf.make_mpf_style(marketcolors=mc, gridaxis='both')
   apdict = []
+  i=0
   for colname in colnames1:
-      apdict.append(mpf.make_addplot(df[colname], secondary_y=False,panel=0,width=3))
+      apdict.append(mpf.make_addplot(df[colname], color='r',secondary_y=False,panel=0,width=3+3*i))
+      i=i+1
+  i=0
   for colname in colnames2:
-      apdict.append(mpf.make_addplot(df[colname], secondary_y=False,panel=0,width=1))
+      apdict.append(mpf.make_addplot(df[colname], color='b',secondary_y=False,panel=0,width=1+3*i))
+      i=i+1
 
   df['KFDiff_Filtered']=df['Filtered_close']-df['Smoothed_close']
   df['KFDiff_close']=df['Close']-df['Smoothed_close']
@@ -46,7 +57,9 @@ def dfplot(ticker, name, df,colnames1,colnames2):
   df['KFDiff_vol_filter']=df['Filtered_vol']-df['Smoothed_vol']
   df['KFDiff_vol']=df['Volume']-df['Smoothed_vol']
 
-  msdr_model_results=DoMarkovRegression(df, 'KFDiff_Filtered', 'KFDiff_close')
+  #msdr_model_results=DoMarkovRegression(df, 'KFDiff_Filtered', 'KFDiff_close')
+  #msdr_model_results=DoMarkovRegression(df, 'ROC', 'KFDiff_close')
+  msdr_model_results=DoMarkovRegression(df, 'ROC', 'KFDiff_Filtered')
   
   (_max,_min)=getMaxMin(df)
   df['MarkovRegression00']=msdr_model_results.filtered_joint_probabilities[0][0]*(_max-_min) +_min
@@ -56,10 +69,12 @@ def dfplot(ticker, name, df,colnames1,colnames2):
 
   
 
-  apdict.append(mpf.make_addplot(df['MarkovRegression00'], secondary_y=False,panel=0,width=3))
+  
+
+#  apdict.append(mpf.make_addplot(df['MarkovRegression00'], secondary_y=False,panel=0,width=3))
   #apdict.append(mpf.make_addplot(df['MarkovRegression01'], secondary_y=False,panel=0,width=2))
   #apdict.append(mpf.make_addplot(df['MarkovRegression10'], secondary_y=False,panel=0,width=3))
-  apdict.append(mpf.make_addplot(df['MarkovRegression11'], secondary_y=False,panel=0,width=1))
+#  apdict.append(mpf.make_addplot(df['MarkovRegression11'], secondary_y=False,panel=0,width=1))
   
   
 
@@ -78,8 +93,8 @@ def dfplot(ticker, name, df,colnames1,colnames2):
   df['MarkovRegression11_vol']=msdr_model_results_vol.filtered_joint_probabilities[1][1]*(_max-_min) +_min
 
   apdict_vol.append(mpf.make_addplot(df['MarkovRegression00_vol'], secondary_y=False,panel=1,width=3))
-  #apdict.append(mpf.make_addplot(df['MarkovRegression01'], secondary_y=False,panel=0,width=2))
-  #apdict.append(mpf.make_addplot(df['MarkovRegression10'], secondary_y=False,panel=0,width=3))
+  apdict.append(mpf.make_addplot(df['MarkovRegression01'], secondary_y=False,panel=0,width=2))
+  apdict.append(mpf.make_addplot(df['MarkovRegression10'], secondary_y=False,panel=0,width=3))
   apdict_vol.append(mpf.make_addplot(df['MarkovRegression11_vol'], secondary_y=False,panel=1,width=1))
 
   fig1,ax1=mpf.plot(df,type='candle',volume=True,volume_panel=1,addplot=apdict_vol, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False, title=ticker,panel_ratios=(3,1))
@@ -95,8 +110,29 @@ def dfplot(ticker, name, df,colnames1,colnames2):
   
   fig2.suptitle(getTitle(ticker,name),fontsize=30)
 
+def DoKalmanFilter(arr, idx):
+  kf = KalmanFilter(
+      initial_state_mean=arr[0],
+      initial_state_covariance=1,
+      observation_covariance=1,
+      transition_covariance=0.01
+  )
+  state_means, _ = kf.filter(arr[:idx+1])
+  state_means_smooth, _ = kf.smooth(arr[:idx+1])
+  return (state_means[-1], state_means_smooth[-1])
+
+def DoKalmanFilterStepByStep(arr):
+  kf_arr=[]
+  kf_s_arr=[]
+  for i in range(len(arr)):
+    (_kf, _kf_s)=DoKalmanFilter(arr, i)
+    kf_arr.append(_kf)
+    kf_s_arr.append(_kf_s)
+  return (kf_arr, kf_s_arr)
+
 def KalmanFilterPlot(ticker, historylen, interval):
   data= GetYahooData_v2(ticker,historylen,interval)
+  data=CalRateChange(data)
   # Define Kalman filter parameters
   kf = KalmanFilter(
       initial_state_mean=data['Close'][0],
@@ -125,8 +161,10 @@ def KalmanFilterPlot(ticker, historylen, interval):
 
   data['Filtered_vol']=state_means_vol
   data['Smoothed_vol']=state_means_smooth_vol
-
-  dfplot(ticker, None, data, ['Smoothed_close','Smoothed_high','Smoothed_low'],['Filtered_close','Filtered_high','Filtered_low'])
+  (kf_step, kf_smooth_step)=DoKalmanFilterStepByStep(data['Close'].values)
+  data['Filtered_close_step']=kf_step
+  data['Smoothed_close_step']=kf_smooth_step
+  dfplot(ticker, None, data, ['Smoothed_close_step'],['Filtered_close','Filtered_close_step' ])
   plt.show()
 
 # Load stock data

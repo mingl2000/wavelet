@@ -1,11 +1,18 @@
 echo off
 echo off
-if [%1]==[] goto :blank
-
+if [%1]==[]  goto :blank
+if [%2]==[]  goto :blank
 set arg1=%1
-python .\mingwave3.py %arg1% 256 1d True 20 True 128 0.1
+set arg2=%2
+
+python .\mingwave4.py %arg1% 2048 %arg2% True 20 True 1280 0.1
 goto :done
 :blank
+echo wavelet.bat QQQ 5m
+echo wavelet.bat QQQ 1h
+echo wavelet.bat QQQ 1d
+
+
 echo python .\mingwave3.py QQQ 256 1d True 20 True 128
 echo python .\mingwave3.py SPX 256 1d True 20 True 128
 

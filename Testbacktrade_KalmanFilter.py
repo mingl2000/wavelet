@@ -99,6 +99,9 @@ class TestStrategy(bt.Strategy):
         #(self.KF, self.KFSmooth)=DoKalmanFilter(self.datas[0])
         self.last_kf_min=10000000
         self.last_kf_max=0
+        (self.kf, self.kf_smooth)=DoKalmanFilter2(self.datas[0].close.array[:])
+        (self.kfv, self.kfv_smooth)=DoKalmanFilter2(self.datas[0].volume.array[:])
+
 
     def notify_order(self, order):
         if order.status in [order.Submitted, order.Accepted]:
@@ -149,12 +152,13 @@ class TestStrategy(bt.Strategy):
         #if self.barIdx< len(self.datas[0].close)-1 and self.barIdx>1:
         print ('self.barIdx=',self.barIdx)
         if self.barIdx>1 and self.barIdx < len(self.datas[0].close.array):
-            (kf, kf_smooth)=DoKalmanFilter2(self.datas[0].close.array[:self.barIdx+1])
-            (kfv, kfv_smooth)=DoKalmanFilter2(self.datas[0].volume.array[:self.barIdx+1])
-            if kf[-1][0]<self.last_kf_min and kf[-1][0]>kf[-2][0]:
-                self.last_kf_min=kf[-1][0]
-            if kf[-1][0]>self.last_kf_max:
-                self.last_kf_max=kf[-1][0]
+            #(kf, kf_smooth)=DoKalmanFilter2(self.datas[0].close.array[:self.barIdx+1])
+            #(kfv, kfv_smooth)=DoKalmanFilter2(self.datas[0].volume.array[:self.barIdx+1])
+
+            if self.kf[self.barIdx][0]<self.last_kf_min:
+                self.last_kf_min=self.kf[self.barIdx][0]
+            if self.kf[self.barIdx][0]>self.last_kf_max:
+                self.last_kf_max=self.kf[self.barIdx][0]
 
             #closeReverse=copy.deepcopy(self.datas[0].close.array[:self.barIdx+1])
             #closeReverse.reverse()
@@ -191,9 +195,11 @@ class TestStrategy(bt.Strategy):
                 #if kf[self.barIdx][0] >kf[self.barIdx-1][0] and kf[self.barIdx-1][0] <=kf[self.barIdx-2][0]:
                 #if kf_smooth[-1][0] >self.datas[0].close.array[self.barIdx]:
                 #if kf[-1][0] >self.datas[0].close.array[self.barIdx] and kfv[-1][0] >self.datas[0].volume.array[self.barIdx]: 19.89% QQQ
-                if kf[-1][0] >self.last_kf_min*1.01  and kf[-1][0]>kf[-2][0]: #26.57% QQQ   88.05% 300750.sz
+                if self.kf[self.barIdx][0] >self.last_kf_min*1.01  and self.kf[self.barIdx][0]>self.kf[self.barIdx-1][0]: #26.57% QQQ   88.05% 300750.sz
                     # BUY, BUY, BUY!!! (with all possible default parameters)
                     self.log('BUY CREATE, %.2f' % self.dataclose[0])
+                    print( 'kf=',self.kf[self.barIdx][0], 'kf_max=',self.last_kf_max, 'kf_min',self.last_kf_min , 'close=',self.datas[0].close.array[self.barIdx])
+                    #self.log('BUY CREATE, %.2f' % self.dataclose[0], 'kf=',self.kf[self.barIdx][0], 'kf_max=',self.last_kf_max, 'kf_min',self.last_kf_min, 'close=',self.datas[0].close.array[self.barIdx] )
 
                     # Keep track of the created order to avoid a 2nd order
                     self.order = self.buy()
@@ -210,13 +216,14 @@ class TestStrategy(bt.Strategy):
                 #if kf[self.barIdx][0] <kf[self.barIdx-1][0] and kf[self.barIdx-1][0] >=kf[self.barIdx-2][0]:    
                 #if kf_smooth[-1][0] <self.datas[0].close.array[self.barIdx]:
                #if kf[-1][0] <self.datas[0].close.array[self.barIdx]: 19.89% QQQ
-                if kf[-1][0] <self.last_kf_max/1.01 and kf[-1][0]<kf[-2][0]:   #26.57% QQQ | 88.05% 300750.sz | 9.27% 002030.sz | 32.84% 002049.sz
+                if self.kf[self.barIdx][0] <self.last_kf_max/1.01 and self.kf[self.barIdx][0]<self.kf[self.barIdx-1][0]:   #26.57% QQQ | 88.05% 300750.sz | 9.27% 002030.sz | 32.84% 002049.sz
                     # SELL, SELL, SELL!!! (with all possible default parameters)
                     self.log('SELL CREATE, %.2f' % self.dataclose[0])
+                    print( 'kf=',self.kf[self.barIdx][0], 'kf_max=',self.last_kf_max, 'kf_min',self.last_kf_min , 'close=',self.datas[0].close.array[self.barIdx])
 
                     # Keep track of the created order to avoid a 2nd order
                     self.order = self.sell()
-                    self.last_kf_min=kf[-1][0]
+                    self.last_kf_min=self.kf[self.barIdx][0]
         self.barIdx=self.barIdx+1
 
 import sys

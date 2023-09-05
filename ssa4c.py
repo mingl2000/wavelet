@@ -528,19 +528,19 @@ We have now established the machinery to easily investigate the effect of the wi
  
 A window length of 2 may seem like a useless choice, but it's a good place to start and watch the time series get decomposed into more and more components. We'll use the handy SSA.components_to_df() method to return a Pandas DataFrame and plot all elementary components at once.
 '''
-F_ssa_L2 = SSA(F, 2)
+F_ssa_L2 = SSA(F, 5)
 F_ssa_L2.components_to_df().plot()
 F_ssa_L2.orig_TS.plot(alpha=0.4)
 plt.xlabel("$t$")
 plt.ylabel(r"$\tilde{F}_i(t)$")
-plt.title(r"$L=2$ for the Toy Time Series");
+plt.title(r"$L=5$ for the Toy Time Series");
 plt.show()
-F_ssa_L8 = SSA(F, 8)
+F_ssa_L8 = SSA(F, 13)
 F_ssa_L8.components_to_df().plot()
 F_ssa_L8.orig_TS.plot(alpha=0.4)
 plt.xlabel("$t$")
 plt.ylabel(r"$\tilde{F}_i(t)$")
-plt.title(r"$L=5$ for the Toy Time Series");
+plt.title(r"$L=13$ for the Toy Time Series");
 plt.show()
 
 
@@ -598,7 +598,7 @@ plt.show()
 
 
 
-F_ssa_L20 = SSA(F, 20)
+F_ssa_L20 = SSA(F, 26)
 F_ssa_L20.plot_wcorr()
 plt.title("W-Correlation for Toy Time Series, $L=20$");
 
@@ -615,7 +615,8 @@ plt.legend([r"$\tilde{F}_0$",
             r"$\tilde{F}_3$"]);
 
 plt.show()
-F_ssa_L40 = SSA(F, 40)
+'''
+F_ssa_L40 = SSA(F, 50)
 F_ssa_L40.plot_wcorr()
 plt.title("W-Correlation for Toy Time Series, $L=40$");
 
@@ -623,17 +624,18 @@ F_ssa_L40.reconstruct(0).plot()
 F_ssa_L40.reconstruct([1,2,3]).plot()
 F_ssa_L40.reconstruct([4,5]).plot()
 F_ssa_L40.reconstruct(slice(6,40)).plot(alpha=0.7)
-plt.title("Component Groupings for Toy Time Series, $L=40$")
+plt.title("Component Groupings for Toy Time Series, $L=50$")
 plt.xlabel("$t$")
 plt.ylabel(r"$\tilde{F}_i(t)$")
 plt.legend([r"$\tilde{{F}}^{{({0})}}$".format(i) for i in range(4)]);
 plt.show()
-
-F_ssa_L60 = SSA(F, 60)
+'''
+F_ssa_L60 = SSA(F, 65)
 F_ssa_L60.plot_wcorr()
-plt.title("W-Correlation for Toy Time Series, $L=60$");
-F_ssa_L60.reconstruct(slice(0,7)).plot()
-F_ssa_L60.reconstruct(slice(7,60)).plot()
+plt.title("W-Correlation for Toy Time Series, $L=65$");
+F_ssa_L60.reconstruct(slice(0,1)).plot()
+F_ssa_L60.reconstruct(slice(1,6)).plot()
+F_ssa_L60.reconstruct(slice(6,60)).plot()
 plt.legend([r"$\tilde{F}^{\mathrm{(signal)}}$", r"$\tilde{F}^{\mathrm{(noise)}}$"])
 plt.title("Signal and Noise Components of Toy Time Series, $L = 60$")
 plt.xlabel(r"$t$");

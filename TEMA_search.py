@@ -116,7 +116,7 @@ def upordown(arr):
   else:
     return 'DOWN'
 def slope(arr):
-  return (arr[-1]-arr[-2])/arr[-2]*100
+  return (arr[-1]-arr[-2])/arr[-2]*100/2
 
 def acceration(arr):
   v0=arr[-1]-arr[-2]
@@ -147,7 +147,14 @@ def calcuteTheilslopes(df, window_size):
     slope.append(stats.theilslopes(y[i:i+window_size], x[i:i+window_size], 0.90).slope)
   #theilslopes=stats.theilslopes(y, x, 0.90)
   return slope
-
+def hma(data, period):
+ wma_1 = data.rolling(period//2).apply(lambda x: \
+ np.sum(x * np.arange(1, period//2+1)) / np.sum(np.arange(1, period//2+1)), raw=True)
+ wma_2 = data.rolling(period).apply(lambda x: \
+ np.sum(x * np.arange(1, period+1)) / np.sum(np.arange(1, period+1)), raw=True)
+ diff = 2 * wma_1 - wma_2
+ hma = diff.rolling(int(np.sqrt(period))).mean()
+ return hma
 import math
 def calculateSSA(symbol,ssa_df,df, window_size=13):
   #df=GetYahooData_v2(symbol, bars=500, interval='1d')
@@ -179,8 +186,12 @@ def calculateSSA(symbol,ssa_df,df, window_size=13):
     #MF_ssa = ssa.fit_transform(MF)
     theilslopes=calcuteTheilslopes(df, window_size)
 
-    temaC=talib.TEMA(df['Close'],window_size)
-    temaV=talib.TEMA(df['Volume'],window_size)
+    #temaC=talib.TEMA(df['Close'],window_size)
+    #temaV=talib.TEMA(df['Volume'],window_size)
+
+    temaC=hma(df['Close'],window_size)
+    temaV=hma(df['Close'],window_size)
+
     for i in range(len(temaC)):
       if math.isnan(temaC[i]):
         temaC[i]=df['Close'][i]
@@ -207,7 +218,7 @@ def calculateSSA(symbol,ssa_df,df, window_size=13):
                             mktestresult.slope,
                             theilslopes[-2],
                             theilslopes[-2]/df['Close'][-2]*100,
-                            X_ssa,
+                            X_ssa[-1],
                             upordown(X_ssa),
                             slope(X_ssa),
                             acceration(X_ssa),
@@ -310,7 +321,7 @@ ssa_columns={'ticker':[],
              'mktest.slope':[],
              'theilslopes':[],
              'theilslopesPercent':[],
-            'X_ssa_01':[], 'X_ssa_01_dir':[], 'X_ssa_01_slope':[],  'X_ssa_01_acceleration':[],
+            'HMA':[], 'HMAdir':[], 'HMA_slope':[],  'HMA_acceleration':[],
             #'MF_ssa_01':[], 'MF_ssa_01_dir':[], 'MF_ssa_01_slope':[], 'MF_ssa_01_acceleration':[], 
             #'OBV_ssa_01':[], 'OBV_ssa_01_dir':[], 'OBV_ssa_01_slope':[], 'OBV_ssa_01_acceleration':[],
             
@@ -324,7 +335,7 @@ ssa_columns={'ticker':[],
             #'OBV_ssa_1':[], 'OBV_ssa_1_dir':[], 'OBV_ssa_1_slope':[],
 
 
-            'V_ssa_0':[], 'V_ssa_0_dir':[], 'V_ssa_0_slope':[], 'V_ssa_0_acceleration':[], 
+            'V_HMA':[], 'V_HMA_dir':[], 'V_HMA_slope':[], 'V_HMA_acceleration':[], 
             #'V_ssa_1':[], 'V_ssa_1_dir':[], 'V_ssa_1_slope':[],
             'Close':[], 
             'Low':[],
@@ -338,10 +349,12 @@ ssa_df.set_index('ticker')
 stock_df=getStockNames()
 for symbol in symbols:
   try:
-    if symbol[7:].lower() in ['sz','sh','ss']:
-      df=GetTDXData_v2(symbol,500,'1d')
+    #if symbol[7:].lower() in ['sz','sh','ss']:
+    df=GetYahooData_v2(symbol,500,'1d')
+      #df=GetTDXData_v2(symbol,500,'1d')
     if df is None:
-      df=GetYahooData_v2(symbol,500,'1d')
+      df=GetTDXData_v2(symbol,500,'1d')
+      #df=GetYahooData_v2(symbol,500,'1d')
     
     calculateSSA(symbol,ssa_df, df)
   except Exception as e:

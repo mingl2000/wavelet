@@ -33,6 +33,8 @@ import yfinance as yf
 warnings.filterwarnings('ignore')
 #matplotlib.rc('font', family='Arial')
 from matplotlib import font_manager
+from YahooData import *
+from TDXData import *
 #fontP = font_manager.FontProperties()
 #fontP.set_family('SimHei')
 #plt.rcParams['font.sans-serif'] = ['SimHei']
@@ -55,7 +57,7 @@ def getTitle(symbol):
   stock_df=getStockNames()
   title=symbol + ' ' +getStockName(stock_df,symbol)[0]+ ' ' +getStockName(stock_df,symbol)[1]
   return title
-
+'''
 def GetYahooData(symbol, bars=500, interval='1d'):
   #start=datetime.date.today()-datetime.timedelta(days=days)
   #end=datetime.date.today()
@@ -103,14 +105,14 @@ def GetYahooData(symbol, bars=500, interval='1d'):
   #df["datefmt"]=df.index.strftime('%m/%d/%Y')
   
   return df
-
+'''
 
 
 
 #data = quandl.get('WIKI/%s' % instrument, start_date='2017-01-01', end_date='2012-02-10')
 
 def plot_ssa(symbol, window_size=20):
-  df=GetYahooData(symbol, bars=500, interval='1d')
+  df=GetYahooData_v2(symbol, bars=500, interval='1d')
   closes = df['Adj Close'].rename('close')
   '''
   N=20

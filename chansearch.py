@@ -32,40 +32,8 @@ def pltdf(df, title, highPeaks, lowPeaks,errorInPercent):
     df.iat[i,7]=df.iloc[i].Low
     df.iat[i,8]=df.iloc[i].Low
 
-  peaks=mergePeaks(df,highPeaks,lowPeaks)
-  ''' add the last data point'''
-  nonePeaks=[]
-  if peaks[-1][2]=='high' and df['High'][-1]>peaks[-1][1]:
-    peaks[-1]=[len(df)-1, df['High'][-1],'high']
-  elif peaks[-1][2]=='low' and df['Low'][-1]<peaks[-1][1]:
-    peaks[-1]=[len(df)-1, df['Low'][-1],'low']
-  elif peaks[-1][2]=='low' and df['High'][-1]>peaks[-1][1]:
-    #peaks=np.append(peaks, [len(df)-1, df['High'][-1],'high'])
-    peaks.append([len(df)-1, df['High'][-1],'high'])
-    #pass
-  elif peaks[-1][2]=='high' and df['Low'][-1]<peaks[-1][1]:
-    peaks.append([len(df)-1, df['Low'][-1],'low'])
-    #peaks=np.append(peaks, [len(df)-1, df['Low'][-1],'low'])
-    #pass
-  else:
-    nonePeaks.append(len(df)-1)
+  peaks,nonePeaks=mergePeaks(df,highPeaks,lowPeaks)
 
-  '''
-  apdHigh = mpf.make_addplot(df['highPeaks'],type='scatter',markersize=200,marker='^')
-  apdLow = mpf.make_addplot(df['lowPeaks'],type='scatter',markersize=200,marker='v')
-  apd = mpf.make_addplot(df['peaks'],type='line',markersize=200,marker='X')
-  apdict = []
-  #apdict.append(apdHigh)
-  #apdict.append(apdLow)
-  apdict.append(apd)
-  '''
-  
-  #fig1,ax1=mpf.plot(df,type='candle',addplot=apdict,volume=False, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False)
-  '''
-  fig1,ax1=mpf.plot(df,type='candle',volume=False, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False)
-  peaksX=np.sort(np.append(highPeaks, lowPeaks))
-  peaksY=df.iloc[peaksX]['peaks']
-  '''
   fig1,ax1=mpf.plot(df,type='candle',volume=False, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False)
   fig1.suptitle(title, fontsize=28)
   peaksX=[]
@@ -187,7 +155,30 @@ def mergePeaks(df,highPeaks,lowPeaks):
   ''' 
   add df last point into merged
   '''
-  return merged
+
+  ''' add the last data point'''
+  ''' add the last data point'''
+  peaks=merged
+  nonePeaks=[]
+
+  if peaks[-1][2]=='high' and df['High'][-1]>peaks[-1][1]:
+    peaks[-1]=[len(df)-1, df['High'][-1],'high']
+  elif peaks[-1][2]=='low' and df['Low'][-1]<peaks[-1][1]:
+    peaks[-1]=[len(df)-1, df['Low'][-1],'low']
+  elif peaks[-1][2]=='low' and df['High'][-1]>peaks[-1][1]:
+    #peaks=np.append(peaks, [len(df)-1, df['High'][-1],'high'])
+    peaks.append([len(df)-1, df['High'][-1],'high'])
+    #pass
+  elif peaks[-1][2]=='high' and df['Low'][-1]<peaks[-1][1]:
+    peaks.append([len(df)-1, df['Low'][-1],'low'])
+    #peaks=np.append(peaks, [len(df)-1, df['Low'][-1],'low'])
+    #pass
+  else:
+    nonePeaks.append(len(df)-1)
+
+
+
+  return (merged, nonePeaks)
       
 
 from statistics import stdev

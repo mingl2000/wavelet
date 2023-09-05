@@ -369,15 +369,22 @@ wf_close_lt=WT(df['Close'], wavefunc='db4', lv=5, m=1, n=5,plot=False)
 wf_high=WT(df['High'], plot=False)
 wf_low=WT(df['Low'], plot=False)
 wf_vol=WT(df['Volume'], plot=False)
-
+'''
 df["coeff_close"] = wf_close[0]
 df["coeff_close_lt"] = wf_close_lt[0]
 df["coeff_high"]= wf_high[0]
 df["coeff_low"]= wf_low[0]
 df["coeff_vol"] =wf_vol[0]
-
-df["coeff_close_01"] = wf_close[0]+wf_close[1]
-df["coeff_vol_01"] = wf_vol[0]+wf_vol[1]
+'''
+df.loc[:,"coeff_close"] =wf_close[0]
+df.loc[:,"coeff_close_lt"] =wf_close_lt[0]
+df.loc[:,"coeff_high"] =wf_high[0]
+df.loc[:,"coeff_low"] =wf_low[0]
+df.loc[:,"coeff_vol"] =wf_vol[0]
+#df["coeff_close_01"] = wf_close[0]+wf_close[1]
+df.loc[:,"coeff_close_01"] =wf_close[0]+wf_close[1]
+#df["coeff_vol_01"] = wf_vol[0]+wf_vol[1]
+df.loc[:,"coeff_vol_01"] =wf_vol[0]+wf_vol[1]
 
 printwavelet(daysprint, df,wf_close, wf_high, wf_low, wf_vol)
 '''

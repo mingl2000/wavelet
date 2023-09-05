@@ -1,0 +1,6 @@
+image/*
+data/*
+*.csv
+*.png
+*.xlsx
+excel/

@@ -7,7 +7,7 @@ from scipy.signal import peak_prominences
 import mplfinance as mpf
 #x = electrocardiogram()[2000:4000]
 
-def pltdf(df, highPeaks, lowPeaks,errorInPercent):
+def pltdf(df, title, highPeaks, lowPeaks,errorInPercent):
   figsize=(26,13)
   mc = mpf.make_marketcolors(
                             volume='lightgray'
@@ -67,6 +67,7 @@ def pltdf(df, highPeaks, lowPeaks,errorInPercent):
   peaksY=df.iloc[peaksX]['peaks']
   '''
   fig1,ax1=mpf.plot(df,type='candle',volume=False, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False)
+  fig1.suptitle(title, fontsize=28)
   peaksX=[]
   peaksY=[]
   for x, y,z in peaks:
@@ -191,7 +192,7 @@ def mergePeaks(df,highPeaks,lowPeaks):
 
 from statistics import stdev
 from statistics import mean
-def findpeaksImp(df, sigmas=1,errorInPercent=1):
+def findpeaksImp(df, title, sigmas=1,errorInPercent=1):
     highdata=df['High'].to_numpy()
     lowdata=df['High'].to_numpy()
     #highPeaks, _highProperties = find_peaks(highdata, height=0,distance=5)
@@ -219,23 +220,28 @@ def findpeaksImp(df, sigmas=1,errorInPercent=1):
 
       nonePeaks.append(len(lowdata)-1)
     '''
-    peaks,highPeaks,lowPeaks, nonePeaks=pltdf(df,highPeaks,lowPeaks,errorInPercent)
+    peaks,highPeaks,lowPeaks, nonePeaks=pltdf(df,title, highPeaks,lowPeaks,errorInPercent)
     return peaks,highPeaks, lowPeaks, nonePeaks
 
 
 
 import sys
 def main(ticker):
-  '''
+  
   df=getYahooData_v1(ticker,  '5m' )
-  peaks,highPeaks, lowPeaks, nonePeaks=findpeaksImp(df,1)
-  '''
+  title=ticker +" 5m"
+  peaks,highPeaks, lowPeaks, nonePeaks=findpeaksImp(df,title,1)
+  title=ticker +" 30m"
   df=getYahooData_v1(ticker,  '30m')
-  peaks,highPeaks, lowPeaks, nonePeaks=findpeaksImp(df,1,0.1)
-  '''
+  peaks,highPeaks, lowPeaks, nonePeaks=findpeaksImp(df,title,1,0.1)
+  title=ticker +" 5h"
+  df=getYahooData_v1(ticker,  '1h')
+  title=ticker +" 5m"
+  peaks,highPeaks, lowPeaks, nonePeaks=findpeaksImp(df,title,1)
+  title=ticker +" 1d"
   df=getYahooData_v1(ticker,  '1d')
-  peaks,highPeaks, lowPeaks, nonePeaks=findpeaksImp(df,1)
-  '''
+  peaks,highPeaks, lowPeaks, nonePeaks=findpeaksImp(df,title,1)
+  
   plt.show()
 
 if __name__ =="__main__":

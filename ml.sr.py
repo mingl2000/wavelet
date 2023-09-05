@@ -230,7 +230,7 @@ def optimum_Kvalue(data):
         labels = kmeans.labels_
         sil[k]=(silhouette_score(data, labels))
     optimum_cluster = k_model[max(sil, key=sil.get)]
-    plt.plot(range(2,12), sil.values())
+    #plt.plot(range(2,12), sil.values())
     return optimum_cluster
   
 low_cl = optimum_Kvalue(high)
@@ -270,9 +270,9 @@ for i in range(len(hlines)):
 
 ##plt.text(5, 5, 'bbb')
 fig, ax =mpf.plot(data,type='renko',volume=False,hlines=dict(hlines=hlines,colors=colors), figsize=figsize,tight_layout=True,returnfig=True,block=False, renko_params=dict(brick_size=brick_size))
+fig.suptitle(title)
 for i in range(len(hlines)):
     ax[0].text(10+40*i, hlines[i], str(round(hlines[i],2)), fontsize=15,  color='black')
-
 
 
 

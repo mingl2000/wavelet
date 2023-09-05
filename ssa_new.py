@@ -26,65 +26,39 @@ import pandas_datareader as pdr
 import pandas as pd
 import mplfinance as mpf
 import yfinance as yf
-
+from YahooData import *
 from os.path import exists
 import yfinance as yf
-def GetYahooData(symbol, bars=500, interval='1d'):
-  #start=datetime.date.today()-datetime.timedelta(days=days)
-  #end=datetime.date.today()
-  if symbol=='SPX':
-    symbol='^GSPC'
-  #df=.gepdrt_data_yahoo(symbols=symbol,  start=start, end=end,interval=interval)
-  
-  #if interval.endswith('m') or interval.endswith('h'):
-  #  period='max'
-  
-  if interval.endswith('1m'):
-    period='7d'
-  elif  interval.endswith('m'):
-    period='60d'
-  elif  interval.endswith('h'):
-    period='730d'
-  else:
-    period='max'
-  
-  #elif interval.endswith('d'):
-    #period=str(days)+'d'
-  #  period='max'
-  #elif  interval.endswith('w'):
-  #  period=str(days)+'wk'
-  
-  dataFileName="data/"+symbol+'_' +period+'_'+ interval +".csv"
-  if interval.endswith(('d','D')) and datetime.datetime.now().hour>=13 and exists(dataFileName):
-    print('read yahoo data from cache')
-    df=pd.read_csv(dataFileName, header=0, index_col=0, encoding='utf-8', parse_dates=True)
-    #df.index=df["Date"]
-  else:
-    print('read yahoo data from web')
-    df = yf.download(tickers=symbol, period=period, interval=interval)
-    df.to_csv(dataFileName, index=True, date_format='%Y-%m-%d %H:%M:%S')
-  #dataFileName="data/"+symbol+".csv"
-  
-  #df = pd.read_csv(dataFileName,index_col=0,parse_dates=True)
-  #df.shape
-  df.dropna(inplace = True)
-  df =df [-bars:]
-  df.head(3)
-  df.tail(3)
-  df["id"]=np.arange(len(df))
-  #df["date1"]=df.index.astype(str)
-  #df["datefmt"]=df.index.strftime('%m/%d/%Y')
-  
-  return df
-
-
-
+from nimbusml.timeseries import SsaForecaster
+from nimbusml.timeseries import SsaChangePointDetector
 
 #data = quandl.get('WIKI/%s' % instrument, start_date='2017-01-01', end_date='2012-02-10')
 
-def plot_ssa(symbol):
-  df=GetYahooData(symbol, bars=500, interval='1d')
+def plot_ssa(symbol, window_size=20):
+  df=GetYahooData_v2(symbol, bars=500, interval='1d')
   closes = df['Adj Close'].rename('close')
+  training_seasons = 13
+  #seasonality_size=5
+  #training_size = seasonality_size * training_seasons
+  training_size=len(df)
+  #window_size=8
+  forecaster = SsaForecaster(series_length=len(df),
+                              train_size=training_size/2,
+                              window_size=window_size,
+                              horizon=5) <<   {'fc': 'ts'}
+  
+  X_train = pd.Series(df['Close'], name="ts")
+
+  forecaster.fit(X_train, verbose=1)
+  data = forecaster.transform(X_train)
+  pd.set_option('display.float_format', lambda x: '%.2f' % x)
+  #print(data)
+
+
+
+   #training_size = seasonality_size * training_seasons
+  print(data)
+  
   '''
   N=20
   t = np.arange(0,N)
@@ -107,18 +81,17 @@ def plot_ssa(symbol):
   rng = np.random.RandomState(41)
   X = rng.randn(n_samples, n_timestamps)
   '''
-  X=[]
-  X.append(closes)
+  #X=[]
+  #X.append(closes)
   # We decompose the time series into three subseries
-  window_size = 20
 
   #groups = [np.arange(i, i + 5) for i in range(0, 11, 5)]
 
   # Singular Spectrum Analysis
-  ssa = SingularSpectrumAnalysis(window_size=window_size, groups=None)
-  X_ssa = ssa.fit_transform(X)
+  #ssa = SingularSpectrumAnalysis(window_size=window_size, groups=None)
+  #X_ssa = ssa.fit_transform(X)
 
-  print(X_ssa)
+  #print(X_ssa)
   # Show the results for the first time series and its subseries
   '''
   plt.figure(figsize=(16, 6))
@@ -149,9 +122,11 @@ def plot_ssa(symbol):
                             
   s  = mpf.make_mpf_style(marketcolors=mc, gridaxis='both')
   apdict = []
-  for i in range(0, int(window_size/2)):
+  #for i in range(0, int(window_size/2)):
+  for i in range(0,4):
       newcol='ssa_' +str(i)
-      df[newcol]=X_ssa[i]
+      #df[newcol]=X_ssa[i]
+      df[newcol]=data['fc.'+str(i)].to_numpy()
       if i==0:
         apdict.append(mpf.make_addplot(df[newcol], panel=0, width=3,secondary_y=False))
       else:
@@ -159,21 +134,35 @@ def plot_ssa(symbol):
           width=1
         else:
           width=5-i
-        apdict.append(mpf.make_addplot(df[newcol], panel=1, width=width,secondary_y=False))
+        apdict.append(mpf.make_addplot(df[newcol], panel=0, width=width,secondary_y=False))
 
 
   fig1,ax1=mpf.plot(df,type='candle',volume=False,volume_panel=2,addplot=apdict, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False)
   fig1.suptitle(symbol,fontsize=30)
-  plt.show()
+  
+  
+  seasonality_size=1
+  cpd = SsaChangePointDetector(confidence=60,
+                                change_history_length=8 ,
+                                training_window_size=training_size,
+                                seasonal_window_size=seasonality_size + 1) << {'result': 'ts'}
+  cpd.fit(X_train, verbose=1)
+  data = cpd.transform(X_train)
+  print(data)
+
 
 
 import sys
+window_size=20
 if len(sys.argv) <2:
-  symbols='QQQ,SPX,000001.ss,399001.sz'
+  symbols='QQQ'
 if len(sys.argv) >=2:
   symbols=sys.argv[1]
+if len(sys.argv) >=3:
+  window_size=int(sys.argv[2])
 
 for symbol in symbols.split(','):
-  plot_ssa(symbol)
+  plot_ssa(symbol, window_size)
+plt.show()
 # The first subseries consists of the trend of the original time series.
 # The second and third subseries consist of noise.

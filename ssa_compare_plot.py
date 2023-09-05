@@ -154,23 +154,23 @@ for window_size in window_sizes:
   df[newcol_diff]=df['Close']-X_ssa[0]
   apdict.append(mpf.make_addplot(df[newcol], ylabel=newcol))
   
-  apdict.append(mpf.make_addplot(df[newcol_diff], panel=2,ylabel=newcol_diff))
+  apdict.append(mpf.make_addplot(df[newcol_diff], panel=1,ylabel=newcol_diff))
   stderr=np.std(df[newcol_diff].to_numpy())
-  apdict.append(mpf.make_addplot(df[newcol_diff], panel=2,ylabel=newcol_diff))
+  apdict.append(mpf.make_addplot(df[newcol_diff], panel=1,ylabel=newcol_diff))
 
   newcol_diff_1_std_ub='ssa_diff_1std_up_'+str(window_size)
   newcol_diff_1_std_lb='ssa_diff_1std_low_'+str(window_size)
   df[newcol_diff_1_std_ub]=stderr
   df[newcol_diff_1_std_lb]=-stderr
-  apdict.append(mpf.make_addplot(df[newcol_diff_1_std_ub], panel=2,ylabel=newcol_diff))
-  apdict.append(mpf.make_addplot(df[newcol_diff_1_std_lb], panel=2,ylabel=newcol_diff))
+  apdict.append(mpf.make_addplot(df[newcol_diff_1_std_ub], panel=1,ylabel=newcol_diff_1_std_ub))
+  apdict.append(mpf.make_addplot(df[newcol_diff_1_std_lb], panel=1,ylabel=newcol_diff_1_std_lb))
 
   newcol_diff_2_std_ub='ssa_diff_2std_up_'+str(window_size)
   newcol_diff_2_std_lb='ssa_diff_2std_low_'+str(window_size)
   df[newcol_diff_2_std_ub]=2*stderr
   df[newcol_diff_2_std_lb]=-2*stderr
-  apdict.append(mpf.make_addplot(df[newcol_diff_2_std_ub], panel=2,ylabel=newcol_diff))
-  apdict.append(mpf.make_addplot(df[newcol_diff_2_std_lb], panel=2,ylabel=newcol_diff))
+  apdict.append(mpf.make_addplot(df[newcol_diff_2_std_ub], panel=1,ylabel=newcol_diff_2_std_ub))
+  apdict.append(mpf.make_addplot(df[newcol_diff_2_std_lb], panel=1,ylabel=newcol_diff_2_std_lb))
 
   print(window_size, X_ssa[0][-1], len(X_ssa[0]) )
 
@@ -190,7 +190,7 @@ plt.subplots_adjust(top=0.88)
 plt.show()
 '''
 
-fig1,ax1=mpf.plot(df,type='candle',volume=True,addplot=apdict, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False)
+fig1,ax1=mpf.plot(df,type='candle',volume=True,volume_panel=2,addplot=apdict, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False)
 plt.show()
 
 

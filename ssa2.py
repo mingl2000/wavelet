@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from pyts.decomposition import SingularSpectrumAnalysis
 
 # Parameters
-n_samples, n_timestamps = 100, 48
+n_samples, n_timestamps = 1000, 20
 
 # Toy dataset
 rng = np.random.RandomState(41)

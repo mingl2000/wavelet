@@ -1,0 +1,58 @@
+                 ev       mae       mse        r2
+GBR_Model  0.828702  4.446999  33.66095  0.828574
+
+
+
+                 ev        mae         mse         r2
+SVR_Model -8.431945  13.844998  263.054047 -18.445289
+
+
+                     ev       mae        mse        r2
+GBR_SVR_Model  0.330146  7.811505  84.155969 -0.142054
+
+
+
+                     ev        mae         mse         r2
+GBR_Model      0.828702   4.446999   33.660950   0.828574
+SVR_Model     -8.431945  13.844998  263.054047 -18.445289
+GBR_SVR_Model  0.330146   7.811505   84.155969  -0.142054
+
+
+4,4,0 seems better for de_GBR mae and mse
+
+df_GBR 
+ev= GBR_Model    0.938205 Name: ev, dtype: float64 
+mae= GBR_Model    1.035718 Name: mae, dtype: float64 
+mse= GBR_Model    1.560075 Name: mse, dtype: float64 
+r2= GBR_Model    0.934126 Name: r2, dtype: float64
+
+df_SVR ev= SVR_Model   -14.033406
+Name: ev, dtype: float64 mae= SVR_Model    6.806897
+Name: mae, dtype: float64 mse= SVR_Model    73.435525
+Name: mse, dtype: float64 r2= SVR_Model   -34.930432
+Name: r2, dtype: float64
+df_GBR_SVR ev= GBR_SVR_Model   -0.530561
+Name: ev, dtype: float64 mae= GBR_SVR_Model    3.742243
+Name: mae, dtype: float64 mse= GBR_SVR_Model    21.038859
+Name: mse, dtype: float64 r2= GBR_SVR_Model   -2.454483
+Name: r2, dtype: float64
+
+
+
+DB23, lv=4
+
+df_GBR ev= GBR_Model    0.770729
+mae= GBR_Model    2.062648
+mse= GBR_Model    5.461711
+r2= GBR_Model    0.63473
+
+df_SVR ev= SVR_Model   -52.698077
+Name: ev, dtype: float64 mae= SVR_Model    5.53404
+Name: mae, dtype: float64 mse= SVR_Model    51.008612
+Name: mse, dtype: float64 r2= SVR_Model   -104.202205
+Name: r2, dtype: float64
+df_GBR_SVR ev= GBR_SVR_Model   -1.660502
+Name: ev, dtype: float64 mae= GBR_SVR_Model    3.798344
+Name: mae, dtype: float64 mse= GBR_SVR_Model    21.551785
+Name: mse, dtype: float64 r2= GBR_SVR_Model   -4.102558
+Name: r2, dtype: float64

@@ -1,0 +1,90 @@
+import numpy as np
+import pandas as pd
+import yfinance as yf
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
+import matplotlib.pyplot as plt
+from matplotlib import style
+import mplfinance as mpf
+style.use('ggplot')
+
+start = '2022-12-03'
+end = '2022-12-10'
+
+tick = yf.Ticker('AAPL')
+data = tick.history(start=start, end=end,interval='1m')
+
+low = pd.DataFrame(data=data['Low'], index=data.index)
+high = pd.DataFrame(data=data['High'], index=data.index)
+
+# finding the optimum k through elbow method
+def get_optimum_clusters(data, saturation_point=0.05):
+
+    wcss = []
+    k_models = []
+
+    size = 11
+    for i in range(1, size):
+        kmeans = KMeans(n_clusters=i)
+        kmeans.fit(data)
+        wcss.append(kmeans.inertia_)
+        k_models.append(kmeans)
+        
+    plt.plot(range(1,11), wcss)
+            
+    return k_models
+
+# index 3 as 4 is the value of K (elbow point)
+low_clusters = get_optimum_clusters(low)[3]
+high_clusters = get_optimum_clusters(high)[3]
+
+low_centers = low_clusters.cluster_centers_
+high_centers = high_clusters.cluster_centers_
+#plt.plot(data['Close'])
+#fig1,ax1=mpf.plot(df,type='candle',volume=True,addplot=apdict, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False)
+
+hlines=[]
+
+
+#data['Close'].plot(figsize=(16,8), c='b')
+for i in low_centers:
+    hlines.append(i[0])
+    #plt.axhline(i, c='g', ls='--')
+for i in high_centers:
+    hlines.append(i[0])
+    #plt.axhline(i, c='r', ls='--')
+mpf.plot(data,type='candle', hlines=hlines)
+
+#finding the optimum k using the silhouette method
+def optimum_Kvalue(data):
+    kmax = 11
+    sil = {}
+    k_model = {}
+    for k in range(2, kmax+1):
+        kmeans = KMeans(n_clusters = k).fit(data)
+        k_model[k] = kmeans
+        labels = kmeans.labels_
+        sil[k]=(silhouette_score(data, labels))
+    optimum_cluster = k_model[max(sil, key=sil.get)]
+    plt.plot(range(2,12), sil.values())
+    return optimum_cluster
+  
+low_cl = optimum_Kvalue(high)
+high_cl = optimum_Kvalue(low)
+
+low_ce = low_cl.cluster_centers_
+high_ce = high_cl.cluster_centers_
+
+hlines=[]
+
+
+#plt.plot(data['Close'])
+#data['Close'].plot(figsize=(16,8), c='b')
+for i in low_ce:
+    hlines.append(i[0])
+    #plt.axhline(i, c='g', ls='--')
+for i in high_ce:
+    hlines.append(i[0])
+    #plt.axhline(i, c='r', ls='--')
+mpf.plot(data,type='candle', hlines=hlines)
+plt.show()

@@ -250,8 +250,10 @@ train_scaled=np.array(train_scaled)
 test_scaled=np.array(test_scaled)
  
 print("开始")
+nb_epoch=100
+nb_neurons=20
 # fit the model
-lstm_model = fit_lstm(train_scaled, 1, 10, 12)
+lstm_model = fit_lstm(train_scaled, 1, nb_epoch, nb_neurons)
 # forecast the entire training dataset to build up state for forecasting
 train_reshaped = train_scaled[:, 0].reshape(len(train_scaled), 1, 1)
 lstm_model.predict(train_reshaped, batch_size=1)
@@ -337,7 +339,8 @@ test_scaled=np.array(test_scaled)
  
 print("开始")
 # fit the model
-lstm_model = fit_lstm(train_scaled, 1, 10, 12)
+
+lstm_model = fit_lstm(train_scaled, 1, nb_epoch, nb_neurons)
 # forecast the entire training dataset to build up state for forecasting
 train_reshaped = train_scaled[:, 0].reshape(len(train_scaled), 1, 1)
 lstm_model.predict(train_reshaped, batch_size=1)
@@ -425,7 +428,7 @@ test_scaled=np.array(test_scaled)
  
 print("开始")
 # fit the model
-lstm_model = fit_lstm(train_scaled, 1, 10, 12)
+lstm_model = fit_lstm(train_scaled, 1, nb_epoch, nb_neurons)
 # forecast the entire training dataset to build up state for forecasting
 train_reshaped = train_scaled[:, 0].reshape(len(train_scaled), 1, 1)
 lstm_model.predict(train_reshaped, batch_size=1)
