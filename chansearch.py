@@ -32,8 +32,8 @@ def pltdf(df, title, highPeaks, lowPeaks,errorInPercent):
     df.iat[i,7]=df.iloc[i].Low
     df.iat[i,8]=df.iloc[i].Low
 
-  peaks,nonePeaks=mergePeaks(df,highPeaks,lowPeaks)
-
+  peaks,nonePeaks,zhongsus=mergePeaks(df,highPeaks,lowPeaks, errorInPercent)
+  
   fig1,ax1=mpf.plot(df,type='candle',volume=False, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False)
   fig1.suptitle(title, fontsize=28)
   peaksX=[]
@@ -55,7 +55,7 @@ def pltdf(df, title, highPeaks, lowPeaks,errorInPercent):
     peaksY.append(df['Close'][nonePeaks[0]])
     ax1[0].plot(peaksX,peaksY, color='y')
   
-  zhongsus=find_zhongsus(peaks, errorInPercent)
+  
   
   for low, high, left, right, expandable in zhongsus:
     peaksX=[]
@@ -121,7 +121,7 @@ def find_zhongsus(peaks, errorInPercent):
     
 
 
-def mergePeaks(df,highPeaks,lowPeaks):
+def mergePeaks(df,highPeaks,lowPeaks, errorInPercent):
   #highPeakParis=zip(highPeaks, [highPeaks, df.iloc[highPeaks].highPeaks.to_numpy(),'high'])
   #lowPeakParis=zip(lowPeaks, [lowPeaks, df.iloc[lowPeaks].highPeaks.to_numpy(),'low'])
   highPeakParis=zip(*[highPeaks, df.iloc[highPeaks].highPeaks.to_numpy(),len(highPeaks)*["high"]])
@@ -177,8 +177,8 @@ def mergePeaks(df,highPeaks,lowPeaks):
     nonePeaks.append(len(df)-1)
 
 
-
-  return (merged, nonePeaks)
+  zhongsus=find_zhongsus(peaks, errorInPercent)
+  return (merged, nonePeaks,zhongsus)
       
 
 from statistics import stdev
