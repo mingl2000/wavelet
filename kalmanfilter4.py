@@ -15,8 +15,7 @@ def CalRateChange(df):
   df['ROC']=0
   for i in range(1,len(df)):
     df['ROC'].iloc[i]=df['Close'].iloc[i]/df['Close'].iloc[i-1]*100.0-100.0
-  return df
-def DoMarkovRegression(df, col1, col2):
+  return df 
   #build and train the MSDR model
   msdr_model = sm.tsa.MarkovRegression(endog=df[col1], k_regimes=2,
   trend='c', exog=df[col2], switching_variance=True)
@@ -93,8 +92,8 @@ def dfplot(ticker, name, df,colnames1,colnames2):
   df['MarkovRegression11_vol']=msdr_model_results_vol.filtered_joint_probabilities[1][1]*(_max-_min) +_min
 
   apdict_vol.append(mpf.make_addplot(df['MarkovRegression00_vol'], secondary_y=False,panel=1,width=3))
-  apdict.append(mpf.make_addplot(df['MarkovRegression01'], secondary_y=False,panel=0,width=2))
-  apdict.append(mpf.make_addplot(df['MarkovRegression10'], secondary_y=False,panel=0,width=3))
+  apdict.append(mpf.make_addplot(df['MarkovRegression01'], secondary_y=False,panel=0,width=2,color='g'))
+  apdict.append(mpf.make_addplot(df['MarkovRegression10'], secondary_y=False,panel=0,width=3,color='m'))
   apdict_vol.append(mpf.make_addplot(df['MarkovRegression11_vol'], secondary_y=False,panel=1,width=1))
 
   fig1,ax1=mpf.plot(df,type='candle',volume=True,volume_panel=1,addplot=apdict_vol, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False, title=ticker,panel_ratios=(3,1))
@@ -181,7 +180,7 @@ def main():
     print("interval can be 1m, 5m, 15m, 30m, 1h, 1d, 1wk, 1mo, 3mo")
     print("python .\mingwave3.py QQQ 256 1d True 20 True 128 0l5")
   if len(sys.argv) <2:
-    ticker='SQQQ'
+    ticker='000001.ss'
   if len(sys.argv) >=2:
     ticker=sys.argv[1]
   if len(sys.argv) >=3:
