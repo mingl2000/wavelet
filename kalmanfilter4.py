@@ -17,6 +17,7 @@ def CalRateChange(df):
     df['ROC'].iloc[i]=df['Close'].iloc[i]/df['Close'].iloc[i-1]*100.0-100.0
   return df 
   #build and train the MSDR model
+def DoMarkovRegression(df, col1, col2):
   msdr_model = sm.tsa.MarkovRegression(endog=df[col1], k_regimes=2,
   trend='c', exog=df[col2], switching_variance=True)
   msdr_model_results = msdr_model.fit(iter=1000)
