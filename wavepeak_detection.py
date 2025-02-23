@@ -134,8 +134,8 @@ def plot_waves(ticker, df,high_prices, low_prices, critical_points, prices_at_po
        ]
 
     if mark_weekly_pts:
-        apds.append(mpf.make_addplot(df['weekly_trough'],type='scatter',color="r",marker='v',markersize=100, label="weekly_trough"))
-        apds.append(mpf.make_addplot(df['weekly_peak'],type='scatter',color="g",marker='^',markersize=100, label="weekly_peak"))
+        apds.append(mpf.make_addplot(df['weekly_trough'],type='scatter',color="r",marker='v',markersize=300, label="weekly_trough"))
+        apds.append(mpf.make_addplot(df['weekly_peak'],type='scatter',color="g",marker='^',markersize=300, label="weekly_peak"))
     mpf.plot(df,type='candle',volume=False,addplot=apds, alines=line_points, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False)
 
 
@@ -195,17 +195,23 @@ def lable_daily_by_weekly(df, weekly_df):
         if df.loc[idx]['peak']==True and idx>=next_week_peak_date and idx<next_week_peak_date_end:
             df.at[idx,'weekly_peak']=df.loc[idx]['High']
             week_peak_start= week_peak_start+1
+            if week_peak_start>=len(weekly_df[weekly_df['peak']==True]):
+                break
             next_week_peak_date=weekly_df[weekly_df['peak']==True].iloc[week_peak_start]['Date']
             #next_week_peak_date=weekly_df[weekly_df['peak']==True].index[week_peak_start]            
             next_week_peak_date_end = next_week_peak_date+ timedelta(days=5)
+            next_week_peak_date =next_week_peak_date + timedelta(days=-5)
             
 
         elif df.loc[idx]['trough']==True and idx>=next_week_trough_date and idx<next_week_trough_date_end:
             df.at[idx, 'weekly_trough']=df.loc[idx]['Low']
             week_trough_start= week_trough_start+1
+            if week_trough_start>=len(weekly_df[weekly_df['trough']==True]):
+                break
             next_week_trough_date = weekly_df[weekly_df['trough']==True].iloc[week_trough_start]['Date']
             #next_week_trough_date=weekly_df[weekly_df['trough']==True].index[week_peak_end]
             next_week_trough_date_end = next_week_trough_date+ timedelta(days=5)
+            next_week_trough_date =next_week_trough_date + timedelta(days=-5)
 
     return df
 
