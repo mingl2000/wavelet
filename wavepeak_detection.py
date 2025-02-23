@@ -1,0 +1,187 @@
+import yfinance as yf
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.signal import find_peaks
+import pandas as pd
+import TDXData3 as TDX
+import mplfinance as mpf
+# Fetch stock data with High and Low prices
+
+def get_stock_data(ticker, period, interval):
+    if ticker.lower().endswith(('.sz','ss')):
+        df= TDX.GetTDXData_v3(ticker, period, interval)
+    else:
+        df = yf.download(ticker,period=period, interval=interval)
+        if isinstance(df.columns, pd.MultiIndex):
+            df.columns = df.columns.get_level_values(0)
+    return df[-period:-1]
+
+def handle_kline_process_include(df):
+    df_new =df
+    df_new['direction'] = None
+    for i in range(1, len(df)): 
+        if df.iloc[i]['High'] > df.iloc[i-1]['High'] and df.iloc[i]['Low'] < df.iloc[i-1]['Low'] or df.iloc[i]['High'] < df.iloc[i-1]['High'] and df.iloc[i]['Low'] > df.iloc[i-1]['Low']:
+            if df.iloc[i-1]['direction'] == 'up':
+                df_new.at[df.index[i],'High']=max(df_new.iloc[i]['High'],df_new.iloc[i-1]['High'])
+                df_new.at[df.index[i],'Low']=max(df_new.iloc[i]['Low'],df_new.iloc[i-1]['Low'])
+                df_new.at[df.index[i],'direction'] =  'up'
+            elif df.iloc[i-1]['direction'] == 'down':
+                df_new.at[df.index[i],'High']=min(df_new.iloc[i]['High'],df_new.iloc[i-1]['High'])
+                df_new.at[df.index[i],'Low']=min(df_new.iloc[i]['Low'],df_new.iloc[i-1]['Low'])
+                df_new.at[df.index[i],'direction'] =  'down'
+            else:
+                s=""
+                pass
+        elif df.iloc[i]['High'] > df.iloc[i-1]['High'] and df.iloc[i]['Low'] > df.iloc[i-1]['Low']:
+            df_new.at[df.index[i],'direction'] =  'up'
+        elif df.iloc[i]['High'] < df.iloc[i-1]['High'] and df.iloc[i]['Low'] < df.iloc[i-1]['Low']:
+            df_new.at[df.index[i],'direction'] =  'down'
+        else:
+            s=""
+            pass
+    df_new.at[df.index[0],'direction'] =df.iloc[1]['direction'] 
+    for i in range(len(df_new)):
+        if df.iloc[i]['direction'] == None:
+            print(i, df[i-2:i+1])
+            print(' direction not set---------------------------------------------------------------')
+
+    return df_new       
+# Wave annotation function using High and Low prices
+def annotate_waves(high_prices, low_prices):
+    # Find peaks in High prices (wave tops)
+    peaks, _ = find_peaks(high_prices, distance=9, prominence=0.5)
+    # Find troughs in Low prices (wave bottoms)
+    troughs, _ = find_peaks(-low_prices, distance=9, prominence=0.5)
+    
+    # Combine and sort critical points
+    critical_points = np.concatenate((peaks, troughs))
+    critical_points = np.sort(np.unique(critical_points))
+    
+    # Determine if each critical point is a peak or trough and get corresponding price
+    prices_at_points = []
+    new_critical_points=[]
+    high_low_labels = []
+    last = None
+    for point in critical_points:
+        if point in peaks and point in troughs:
+            continue
+        elif point in peaks:
+            if last == 'peak':
+                if high_prices[point] > prices_at_points[-1]:
+                    prices_at_points.pop()
+                    high_low_labels.pop()
+                    new_critical_points.pop()
+                else: 
+                    continue            
+            prices_at_points.append(high_prices[point])  # Use High price for peaks
+            high_low_labels.append('P')
+            new_critical_points.append(point)
+            last = 'peak'
+        elif point in troughs:
+            if last == 'trough':
+                if low_prices[point] < prices_at_points[-1]:
+                    prices_at_points.pop() 
+                    high_low_labels.pop()
+                    new_critical_points.pop()
+                else: 
+                    continue            
+            prices_at_points.append(low_prices[point])  # Use Low price for troughs
+            high_low_labels.append('T')
+            new_critical_points.append(point)
+            last = 'trough'
+    
+    # Assign wave labels (simplified: 1-5 for impulse, A-C for correction)
+    wave_labels = []
+    for i in range(len(new_critical_points)):
+        if i % 8 < 5:  # Impulse waves (1, 2, 3, 4, 5)
+            wave_labels.append(str((i % 5) + 1))
+        else:  # Corrective waves (A, B, C)
+            wave_labels.append(chr(65 + (i % 3)))  # A, B, C
+    
+    return critical_points, prices_at_points, wave_labels, new_critical_points, high_low_labels
+
+# Plot the data with wave annotations
+def plot_waves(ticker, df,high_prices, low_prices, critical_points, prices_at_points, high_low_labels,wave_labels):
+    figsize = figsize=(12, 6)
+    mc = mpf.make_marketcolors(
+                           volume='lightgray'
+                           )
+    s  = mpf.make_mpf_style(marketcolors=mc)
+    line_points =[]
+    df['Impulse']=np.nan
+    df['Corrective']=np.nan
+    for idx in range(len(critical_points)):
+        line_points.append((df.index[critical_points[idx]], prices_at_points[idx]))
+        if wave_labels[idx] in ['1','2','3','4','5']:
+            df.at[df.index[critical_points[idx]],'Impulse'] = prices_at_points[idx]        
+        elif wave_labels[idx] in ['A','C']:
+            df.at[df.index[critical_points[idx]],'Corrective'] = prices_at_points[idx]
+        
+
+    apds = [ 
+
+         #mpf.make_addplot(df['Impulse'],type='scatter',color="r",marker='^',markersize=100, label="make_addplot(type='step', label='...')"),
+         #mpf.make_addplot(df['Corrective'],type='scatter',color="r",marker='v',markersize=100,label="make_addplot(type='step', label='...')"),
+         #mpf.make_addplot((df['PercentB']),panel=1,color='y',label="make_addplot(type='line',panel=1, label='...')")
+       ]
+    mpf.plot(df,type='candle',volume=False,addplot=apds, alines=line_points, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False)
+
+
+    
+    #mpf.plot(df, type='candle', style='charles', volume=True, title=f'{ticker} Price with Elliott Wave Annotations', ylabel='Price')
+    #plt.plot(high_prices, label=f'{ticker} High Price', color='green')
+    #plt.plot(low_prices, label=f'{ticker} Low Price', color='red')
+    #plt.plot(critical_points, prices_at_points, "bo", label="Wave Points")  # Mark critical points
+    
+    # Annotate waves
+    '''
+    for i, point in enumerate(critical_points):
+        plt.annotate(wave_labels[i], (point, prices_at_points[i]), 
+                     textcoords="offset points", xytext=(0, 10), ha='center')
+    '''
+    plt.title(f'{ticker} Price with Elliott Wave Annotations (High/Low)')
+    plt.xlabel('Time')
+    plt.ylabel('Price')
+    plt.legend()
+    
+
+
+def get_custom_week_df(df):
+    
+    df['Custom_Week'] = -((len(df) - df.reset_index().index - (5-len(df)%5)) // 5-len(df)//5+1)
+    #df['Custom_Week'] = df.reset_index().index + (5-len(df)%5)-(len(df)) // 5-len(df)//5+1
+    # Aggregate data based on the custom 5-day week definition
+    df['Date']=df.index
+    weekly_df = df.groupby('Custom_Week').agg({
+        'Date': 'first',   # Date of the first day in the 5-day period
+        'Open': 'first',   # Open price of the first day in the 5-day period
+        'High': 'max',     # Highest price within the 5-day period
+        'Low': 'min',      # Lowest price within the 5-day period
+        'Close': 'last',    # Close price of the last day in the 5-day period
+        'Volume': 'sum'   # Total volume over the 5-day period
+    }).sort_index(ascending=True)  # Sort to show latest week first
+
+    
+    weekly_df.index = weekly_df['Date']
+    print(weekly_df)
+    return weekly_df
+
+def process_waves(ticker):
+    data = get_stock_data(ticker, 501, '1d')
+    weekly_data = get_custom_week_df(data)
+    data = handle_kline_process_include(data)
+    high_prices = data['High'].values
+    low_prices = data['Low'].values
+    critical_points, prices_at_points, wave_labels, new_critical_points, high_low_labels = annotate_waves(high_prices, low_prices)
+    plot_waves(ticker, data,high_prices, low_prices, new_critical_points, prices_at_points, high_low_labels, wave_labels)
+    
+    high_prices = weekly_data['High'].values
+    low_prices = weekly_data['Low'].values
+    critical_points, prices_at_points, wave_labels, new_critical_points, high_low_labels = annotate_waves(high_prices, low_prices)
+    
+    plot_waves(ticker, weekly_data,high_prices, low_prices, new_critical_points, prices_at_points, high_low_labels, wave_labels)
+    
+
+
+process_waves('002049.sz')
+plt.show()
