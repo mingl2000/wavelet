@@ -14,7 +14,7 @@ def get_stock_data(ticker, period, interval):
         df = yf.download(ticker,period=period, interval=interval)
         if isinstance(df.columns, pd.MultiIndex):
             df.columns = df.columns.get_level_values(0)
-    return df[-period:-1]
+    return df[-period:]
 
 def handle_kline_process_include(df):
     df_new =df
@@ -192,19 +192,18 @@ def lable_daily_by_weekly(df, weekly_df):
 
 
     for idx in df.index:
-        if df.loc[idx]['peak']==True and idx>=next_week_peak_date and idx<=next_week_peak_date_end:
+        if df.loc[idx]['peak']==True and idx>=next_week_peak_date and idx<next_week_peak_date_end:
             df.at[idx,'weekly_peak']=df.loc[idx]['High']
             week_peak_start= week_peak_start+1
-            next_week_peak_date=weekly_df.iloc[week_peak_start:][weekly_df['peak']==True].iloc[0]['Date']
+            next_week_peak_date=weekly_df[weekly_df['peak']==True].iloc[week_peak_start]['Date']
             #next_week_peak_date=weekly_df[weekly_df['peak']==True].index[week_peak_start]            
             next_week_peak_date_end = next_week_peak_date+ timedelta(days=5)
             
 
-        elif df.loc[idx]['trough']==True and idx>=next_week_trough_date and idx<=next_week_trough_date_end:
+        elif df.loc[idx]['trough']==True and idx>=next_week_trough_date and idx<next_week_trough_date_end:
             df.at[idx, 'weekly_trough']=df.loc[idx]['Low']
             week_trough_start= week_trough_start+1
-
-            next_week_trough_date=weekly_df.iloc[week_trough_start:][weekly_df['trough']==True].iloc[0]['Date']
+            next_week_trough_date = weekly_df[weekly_df['trough']==True].iloc[week_trough_start]['Date']
             #next_week_trough_date=weekly_df[weekly_df['trough']==True].index[week_peak_end]
             next_week_trough_date_end = next_week_trough_date+ timedelta(days=5)
 
@@ -226,7 +225,7 @@ def process_waves(ticker):
     data = lable_daily_by_weekly(data, weekly_data)
     s=""
     plot_waves(ticker, data,high_prices, low_prices, new_critical_points, prices_at_points, high_low_labels, wave_labels, mark_weekly_pts=True)
-    #plot_waves(ticker, weekly_data,week_high_prices, week_low_prices, week_new_critical_points, week_prices_at_points, week_high_low_labels, week_wave_labels , mark_weekly_pts=False)
+    plot_waves(ticker, weekly_data,week_high_prices, week_low_prices, week_new_critical_points, week_prices_at_points, week_high_low_labels, week_wave_labels , mark_weekly_pts=False)
     
 
 
