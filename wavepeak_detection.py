@@ -47,7 +47,7 @@ def handle_kline_process_include(df):
 
     return df_new       
 # Wave annotation function using High and Low prices
-def annotate_waves(high_prices, low_prices):
+def annotate_waves(df, high_prices, low_prices):
     # Find peaks in High prices (wave tops)
     peaks, _ = find_peaks(high_prices, distance=9, prominence=0.5)
     # Find troughs in Low prices (wave bottoms)
@@ -98,10 +98,18 @@ def annotate_waves(high_prices, low_prices):
         else:  # Corrective waves (A, B, C)
             wave_labels.append(chr(65 + (i % 3)))  # A, B, C
     
+    df['peak'] = np.nan
+    df['trough'] = np.nan
+    for i in range(len(new_critical_points)):
+        idx = critical_points[i]
+        if high_low_labels[i] == 'P':
+            df.at[df.index[idx],'peak'] =  True
+        elif high_low_labels[i] == 'T':
+            df.at[df.index[idx],'trough'] =  True
     return critical_points, prices_at_points, wave_labels, new_critical_points, high_low_labels
 
 # Plot the data with wave annotations
-def plot_waves(ticker, df,high_prices, low_prices, critical_points, prices_at_points, high_low_labels,wave_labels):
+def plot_waves(ticker, df,high_prices, low_prices, critical_points, prices_at_points, high_low_labels,wave_labels, mark_weekly_pts):
     figsize = figsize=(12, 6)
     mc = mpf.make_marketcolors(
                            volume='lightgray'
@@ -124,6 +132,10 @@ def plot_waves(ticker, df,high_prices, low_prices, critical_points, prices_at_po
          #mpf.make_addplot(df['Corrective'],type='scatter',color="r",marker='v',markersize=100,label="make_addplot(type='step', label='...')"),
          #mpf.make_addplot((df['PercentB']),panel=1,color='y',label="make_addplot(type='line',panel=1, label='...')")
        ]
+
+    if mark_weekly_pts:
+        apds.append(mpf.make_addplot(df['weekly_trough'],type='scatter',color="r",marker='v',markersize=100, label="weekly_trough"))
+        apds.append(mpf.make_addplot(df['weekly_peak'],type='scatter',color="g",marker='^',markersize=100, label="weekly_peak"))
     mpf.plot(df,type='candle',volume=False,addplot=apds, alines=line_points, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False)
 
 
@@ -166,20 +178,52 @@ def get_custom_week_df(df):
     print(weekly_df)
     return weekly_df
 
+from datetime import datetime, timedelta
+def lable_daily_by_weekly(df, weekly_df):
+    df['weekly_peak'] = np.nan
+    df['weekly_trough'] = np.nan
+    
+    week_peak_start=0
+    week_peak_end =0 
+    next_week_peak_date=weekly_df[weekly_df['peak']==True].index[week_peak_start]
+    next_week_trough_date=weekly_df[weekly_df['trough']==True].index[week_peak_end]
+    next_week_peak_date_end = next_week_peak_date+ timedelta(days=5)
+    next_week_trough_date_end = next_week_trough_date+ timedelta(days=5)
+
+
+    for idx in df.index:
+        if df.loc[idx]['peak']==True and idx>=next_week_peak_date and idx<=next_week_peak_date_end:
+            df.at[idx,'weekly_peak']=df.loc[idx]['High']
+            week_peak_start= week_peak_start+1
+            next_week_peak_date=weekly_df[weekly_df['peak']==True].index[week_peak_start]            
+            next_week_peak_date_end = next_week_peak_date+ timedelta(days=5)
+            
+
+        elif df.loc[idx]['trough']==True and idx>=next_week_trough_date and idx<=next_week_trough_date_end:
+            df.at[idx, 'weekly_trough']=df.loc[idx]['Low']
+            week_peak_end= week_peak_end+1
+            next_week_trough_date=weekly_df[weekly_df['trough']==True].index[week_peak_end]
+            next_week_trough_date_end = next_week_trough_date+ timedelta(days=5)
+
+    return df
+
+
 def process_waves(ticker):
     data = get_stock_data(ticker, 501, '1d')
     weekly_data = get_custom_week_df(data)
     data = handle_kline_process_include(data)
     high_prices = data['High'].values
     low_prices = data['Low'].values
-    critical_points, prices_at_points, wave_labels, new_critical_points, high_low_labels = annotate_waves(high_prices, low_prices)
-    plot_waves(ticker, data,high_prices, low_prices, new_critical_points, prices_at_points, high_low_labels, wave_labels)
+    critical_points, prices_at_points, wave_labels, new_critical_points, high_low_labels = annotate_waves(data, high_prices, low_prices)
+    
     
     week_high_prices = weekly_data['High'].values
     week_low_prices = weekly_data['Low'].values
-    week_critical_points, week_prices_at_points, week_wave_labels, week_new_critical_points, week_high_low_labels = annotate_waves(week_high_prices, week_low_prices)
-    
-    plot_waves(ticker, weekly_data,week_high_prices, week_low_prices, week_new_critical_points, week_prices_at_points, week_high_low_labels, week_wave_labels)
+    week_critical_points, week_prices_at_points, week_wave_labels, week_new_critical_points, week_high_low_labels = annotate_waves(weekly_data, week_high_prices, week_low_prices)
+    data = lable_daily_by_weekly(data, weekly_data)
+    s=""
+    plot_waves(ticker, data,high_prices, low_prices, new_critical_points, prices_at_points, high_low_labels, wave_labels, mark_weekly_pts=True)
+    #plot_waves(ticker, weekly_data,week_high_prices, week_low_prices, week_new_critical_points, week_prices_at_points, week_high_low_labels, week_wave_labels , mark_weekly_pts=False)
     
 
 
