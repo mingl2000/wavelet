@@ -135,9 +135,9 @@ def plot_waves(ticker, df,high_prices, low_prices, critical_points, prices_at_po
 
     if mark_weekly_pts:
         if len(df[(~np.isnan(df['weekly_trough']))])>0:
-            apds.append(mpf.make_addplot(df['weekly_trough'],type='scatter',color="r",marker='v',markersize=300, label="weekly_trough"))
+            apds.append(mpf.make_addplot(df['weekly_trough'],type='scatter',color="r",marker='^',markersize=300, label="weekly_trough"))
         if len(df[(~np.isnan(df['weekly_peak']))])>0:
-            apds.append(mpf.make_addplot(df['weekly_peak'],type='scatter',color="g",marker='^',markersize=300, label="weekly_peak"))
+            apds.append(mpf.make_addplot(df['weekly_peak'],type='scatter',color="g",marker='v',markersize=300, label="weekly_peak"))
     mpf.plot(df,type='candle',volume=False,addplot=apds, alines=line_points, figsize=figsize,tight_layout=True,style=s,returnfig=True,block=False)
 
 
@@ -187,10 +187,10 @@ def lable_daily_by_weekly(df, weekly_df):
     
     week_peak_start=0
     week_trough_start =0 
-    next_week_peak_date=weekly_df[weekly_df['peak']==True].index[week_peak_start] + timedelta(days=-10)
-    next_week_trough_date=weekly_df[weekly_df['trough']==True].index[week_trough_start] + timedelta(days=-10)
-    next_week_peak_date_end = next_week_peak_date+ timedelta(days=10)
-    next_week_trough_date_end = next_week_trough_date+ timedelta(days=10)
+    next_week_peak_date=weekly_df[weekly_df['peak']==True].index[week_peak_start] 
+    next_week_trough_date=weekly_df[weekly_df['trough']==True].index[week_trough_start] 
+    next_week_peak_date, next_week_peak_date_end = next_week_peak_date+ timedelta(days=-10), next_week_peak_date+ timedelta(days=10)
+    next_week_trough_date, next_week_trough_date_end = next_week_trough_date+ timedelta(days=-10), next_week_trough_date+ timedelta(days=10)
 
 
     for idx in df.index:
@@ -200,9 +200,7 @@ def lable_daily_by_weekly(df, weekly_df):
             if week_peak_start>=len(weekly_df[weekly_df['peak']==True]):
                 break
             next_week_peak_date=weekly_df[weekly_df['peak']==True].iloc[week_peak_start]['Date']
-            #next_week_peak_date=weekly_df[weekly_df['peak']==True].index[week_peak_start]            
-            next_week_peak_date_end = next_week_peak_date+ timedelta(days=10)
-            next_week_peak_date =next_week_peak_date + timedelta(days=-10)
+            next_week_peak_date, next_week_peak_date_end = next_week_peak_date+ timedelta(days=-10), next_week_peak_date+ timedelta(days=10)
             
 
         elif df.loc[idx]['trough']==True and idx>=next_week_trough_date and idx<next_week_trough_date_end:
@@ -212,14 +210,12 @@ def lable_daily_by_weekly(df, weekly_df):
                 break
             next_week_trough_date = weekly_df[weekly_df['trough']==True].iloc[week_trough_start]['Date']
             #next_week_trough_date=weekly_df[weekly_df['trough']==True].index[week_peak_end]
-            next_week_trough_date_end = next_week_trough_date+ timedelta(days=10)
-            next_week_trough_date =next_week_trough_date + timedelta(days=-10)
-
+            next_week_trough_date, next_week_trough_date_end = next_week_trough_date+ timedelta(days=-10), next_week_trough_date+ timedelta(days=10)
     return df
 
 
 def process_waves(ticker):
-    data = get_stock_data(ticker, 500, '1d')
+    data = get_stock_data(ticker, 501, '1d')
     weekly_data = get_custom_week_df(data)
     data = handle_kline_process_include(data)
     weekly_data = handle_kline_process_include(weekly_data)
