@@ -184,9 +184,9 @@ def lable_daily_by_weekly(df, weekly_df):
     df['weekly_trough'] = np.nan
     
     week_peak_start=0
-    week_peak_end =0 
+    week_trough_start =0 
     next_week_peak_date=weekly_df[weekly_df['peak']==True].index[week_peak_start]
-    next_week_trough_date=weekly_df[weekly_df['trough']==True].index[week_peak_end]
+    next_week_trough_date=weekly_df[weekly_df['trough']==True].index[week_trough_start]
     next_week_peak_date_end = next_week_peak_date+ timedelta(days=5)
     next_week_trough_date_end = next_week_trough_date+ timedelta(days=5)
 
@@ -195,14 +195,17 @@ def lable_daily_by_weekly(df, weekly_df):
         if df.loc[idx]['peak']==True and idx>=next_week_peak_date and idx<=next_week_peak_date_end:
             df.at[idx,'weekly_peak']=df.loc[idx]['High']
             week_peak_start= week_peak_start+1
-            next_week_peak_date=weekly_df[weekly_df['peak']==True].index[week_peak_start]            
+            next_week_peak_date=weekly_df.iloc[week_peak_start:][weekly_df['peak']==True].iloc[0]['Date']
+            #next_week_peak_date=weekly_df[weekly_df['peak']==True].index[week_peak_start]            
             next_week_peak_date_end = next_week_peak_date+ timedelta(days=5)
             
 
         elif df.loc[idx]['trough']==True and idx>=next_week_trough_date and idx<=next_week_trough_date_end:
             df.at[idx, 'weekly_trough']=df.loc[idx]['Low']
-            week_peak_end= week_peak_end+1
-            next_week_trough_date=weekly_df[weekly_df['trough']==True].index[week_peak_end]
+            week_trough_start= week_trough_start+1
+
+            next_week_trough_date=weekly_df.iloc[week_trough_start:][weekly_df['trough']==True].iloc[0]['Date']
+            #next_week_trough_date=weekly_df[weekly_df['trough']==True].index[week_peak_end]
             next_week_trough_date_end = next_week_trough_date+ timedelta(days=5)
 
     return df
