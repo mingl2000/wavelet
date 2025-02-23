@@ -175,11 +175,11 @@ def process_waves(ticker):
     critical_points, prices_at_points, wave_labels, new_critical_points, high_low_labels = annotate_waves(high_prices, low_prices)
     plot_waves(ticker, data,high_prices, low_prices, new_critical_points, prices_at_points, high_low_labels, wave_labels)
     
-    high_prices = weekly_data['High'].values
-    low_prices = weekly_data['Low'].values
-    critical_points, prices_at_points, wave_labels, new_critical_points, high_low_labels = annotate_waves(high_prices, low_prices)
+    week_high_prices = weekly_data['High'].values
+    week_low_prices = weekly_data['Low'].values
+    week_critical_points, week_prices_at_points, week_wave_labels, week_new_critical_points, week_high_low_labels = annotate_waves(week_high_prices, week_low_prices)
     
-    plot_waves(ticker, weekly_data,high_prices, low_prices, new_critical_points, prices_at_points, high_low_labels, wave_labels)
+    plot_waves(ticker, weekly_data,week_high_prices, week_low_prices, week_new_critical_points, week_prices_at_points, week_high_low_labels, week_wave_labels)
     
 
 
