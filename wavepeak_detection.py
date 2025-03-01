@@ -103,9 +103,9 @@ def annotate_waves(df, high_prices, low_prices):
     for i in range(len(new_critical_points)):
         idx = critical_points[i]
         if high_low_labels[i] == 'P':
-            df.at[df.index[idx],'peak'] =  True
+            df.at[df.index[idx],'peak'] =  1
         elif high_low_labels[i] == 'T':
-            df.at[df.index[idx],'trough'] =  True
+            df.at[df.index[idx],'trough'] =  1
     return critical_points, prices_at_points, wave_labels, new_critical_points, high_low_labels
 
 # Plot the data with wave annotations
