@@ -89,10 +89,10 @@ def get_stock_data(ticker, period, interval):
 def handle_kline_process_include(df):
     df_new =df
     df_new['direction'] = None
-    df_new['DingFX'] = None
-    df_new['DieFX'] = None
-    df_new['StrongDingFX'] = None
-    df_new['StrongDieFX'] = None
+    df_new['DingFX'] = 0
+    df_new['DieFX'] = 0
+    df_new['StrongDingFX'] = 0
+    df_new['StrongDieFX'] = 0
 
     for i in range(1, len(df)): 
         if df.iloc[i]['High'] > df.iloc[i-1]['High'] and df.iloc[i]['Low'] < df.iloc[i-1]['Low'] or df.iloc[i]['High'] < df.iloc[i-1]['High'] and df.iloc[i]['Low'] > df.iloc[i-1]['Low']:
@@ -117,13 +117,13 @@ def handle_kline_process_include(df):
     df_new.at[df.index[0],'direction'] =df.iloc[1]['direction'] 
     for i in range(2,len(df_new)):
         if df_new.iloc[i-1]['High'] >df_new.iloc[i-2]['High'] and df_new.iloc[i-1]['Low'] >df_new.iloc[i-2]['Low'] and  df_new.iloc[i-1]['High'] >df_new.iloc[i]['High'] and df_new.iloc[i-1]['Low'] >df_new.iloc[i]['Low']:
-            df_new.at[df.index[i],'DingFX'] =  True
+            df_new.at[df.index[i],'DingFX'] =  1
             if df_new.iloc[i-1]['Low']<df_new.iloc[i-2]['Low']:
-                df_new.at[df.index[i],'StrongDingFX'] =  True
+                df_new.at[df.index[i],'StrongDingFX'] =  1
         if df_new.iloc[i-1]['High'] <df_new.iloc[i-2]['High'] and df_new.iloc[i-1]['Low'] <df_new.iloc[i-2]['Low'] and  df_new.iloc[i-1]['High'] <df_new.iloc[i]['High'] and df_new.iloc[i-1]['Low'] <df_new.iloc[i]['Low']:
-            df_new.at[df.index[i],'DieFX'] =  True
+            df_new.at[df.index[i],'DieFX'] =  1
             if df_new.iloc[i-1]['High']>df_new.iloc[i-2]['High']:
-                df_new.at[df.index[i],'StrongDieFX'] =  True
+                df_new.at[df.index[i],'StrongDieFX'] =  1
         
     for i in range(len(df_new)):
         if df.iloc[i]['direction'] == None:
@@ -330,7 +330,7 @@ def process_waves(ticker, toprint=False):
     return data
 
 def calculate_features(ticker):
-    df = process_waves('399006.sz')
+    df = process_waves(ticker)
     df['weekly_peak'] = ~np.isnan(df['weekly_peak'])
     df['weekly_trough'] = ~np.isnan(df['weekly_trough'])
     df['Lag1_Return'] =df['Close'].pct_change().shift(1)
@@ -357,6 +357,7 @@ def calculate_features(ticker):
     df['ADX'] = dx.rolling(window=14).mean()
 
     df['Direction'] = (df['Close'].shift(-1)>df['Close']).astype(int)
+    df =calculate_macd(df, fast=12, slow=26, signal=9)
     #bullish_div, bearish_div = find_divergences(df)
     '''
     df =df [[ticker]].copy
@@ -369,19 +370,35 @@ def calculate_features(ticker):
     df['Direction'] = (df['Price'].shift(-1)>df['Price']).astype(int)
     '''
     return df.dropna()
-def xgboost_model(df):
-    X =df[['Lag1_Return', 'Lag5_Return', 'Lag10_Return', 'SMA_Crossover','ADX','TR','StrongDingFX','DingFX','StrongDieFX','DieFX']]
+def xgboost_model(ticker, df):
+    X =df[['Lag1_Return', 'Lag5_Return', 'Lag10_Return', 'SMA_Crossover','ADX','TR','StrongDingFX','DingFX','StrongDieFX','DieFX','MACD','Signal','Histogram']]
     #X =df[['SMA_Crossover']]
     y = df['peak_trough']
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle=False)
     model = XGBClassifier(max_depth=8, n_estimators=100, learning_rate=0.1)
     model.fit(X_train, y_train)
     accuracy = model.score(X_test, y_test)
-    print(f'Model Accuracy: {accuracy:4f}')
+    print(f'{ticker} Model Accuracy: {accuracy:4f}')
+
+    #prediction
+    features =X[-1:] 
+    preds = model.predict(np.array(features))
+    if len(preds)>0:
+        if preds[0] == 2:
+            print('prediction ', ticker,  ': peak predicted')
+        elif preds[0] == 1:
+            print('prediction ', ticker,  ': trough predicted')
+        else:
+            print('prediction ', ticker,  ': no peak or trough predicted')
+    else:
+        print('prediction ', ticker,  ': model.predict() did not produce result!')
 def main():
     #process_waves('002049.sz', False)
-    df =calculate_features('399006.sz')
-    xgboost_model(df)
+    tickers=['399006.sz','399001.sz','002050.sz','000063.sz','688256.ss']
+    #tickers=['399006.sz']
+    for ticker in tickers:
+        df =calculate_features(ticker)
+        xgboost_model(ticker, df)
     print('done')
     
     #plt.show()
